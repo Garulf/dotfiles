@@ -1,0 +1,224 @@
+# Create a new directory and enter it
+function mkd() {
+  mkdir -p "$@" && cd "$_";
+}
+
+## output directory/file tree, excluding ignorables
+function tre(){
+  tree -aC -I '.git|node_modules|bower_components|.DS_Store' --dirsfirst "$@"
+}
+
+
+#function chpwd() {
+#    emulate -L zsh
+#    cdir="$(pwd | rev | cut -f1 -d'/' - | rev)"
+#    # echo $cdir
+#    if $(python '/Users/Billy/Documents/Projects/check_dir_folder/main.py' "$cdir"); then
+#      source "/Users/Billy/Documents/Environments/$cdir/bin/activate"
+#    fi
+#}
+function chpwd() {
+    activate_venv 2> /dev/null
+}
+export git_server="10.0.0.89"
+export PROJECT_DIR="$HOME/Documents/Projects"
+function pjpy () {
+    git_server="10.0.0.89"
+    py_ignore="$(cat "$PROJECT_DIR/Python.gitignore")"
+    if [ ! $# -eq 0 ]; then
+        new_dir="$PROJECT_DIR/$1"
+        if [ ! -d $new_dir ]; then
+            mkdir "$new_dir"
+            virtualenv "$new_dir/.venv"
+            git init "$new_dir"
+            echo "$py_ignore" > "$new_dir/.gitignore"
+            cd "$new_dir"
+            ssh "git@${git_server}" create "$1"
+            git remote add origin "ssh://git@${git_server}/volume1/git/${1}.git"
+        else
+            echo "Project folder already exists!"
+        fi
+    fi
+}
+
+function git_remote () {
+  git_server="10.0.0.89"
+	if [ $# -eq 0 ]; then
+		exit 1
+	else
+		ssh "git@${git_server}" create "$1"
+	fi
+}
+
+#### Bitwarden CLI ####
+
+blogin() {
+    lock_status=$(bw unlock --check)
+    if [ $? -ne 0 ]; then
+        session=$(bw unlock --raw)
+        export BW_SESSION=$session
+        return 0
+    fi
+    return 1
+}
+
+bsudo () {
+    # Use sudo password from bitwarden
+    sudo -n true 2> /dev/null
+    if [ $? -ne 0 ]; then
+        blogin
+        sudo_password=$(bw get password "cli://$(hostname)")
+        if [ $? -eq 0 ]; then
+            echo $sudo_password | sudo -S -p "" $@
+        else
+            echo "Failed to get password from Bitwarden (cli://$(hostname))"
+        fi
+    else
+        sudo $@
+    fi
+}
+
+#### Git #####
+
+function git () {
+    command git $@
+    if [[ "$1" == 'init' ]]; then
+        echo "Creating .gitignore"
+        if [[ -n "$2" ]]; then
+            curl https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore > "$2/.gitignore"
+        else
+            curl https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore > "./.gitignore"
+        fi
+    fi
+}
+
+##### Python env helpers #####
+
+function activate_venv () {
+	cdir="basename $(pwd)"
+    if [ $# -eq 0 ]; then
+        if [ -d .venv ]; then
+            result=".venv/bin/activate"
+            echo "Local Virtual ENV activated."
+        elif [ -d "~/.venv/$cdir" ]; then
+            result="~/.venv/$cdir/bin/activate" 2> /dev/null
+            echo "User Virtual ENV activated."
+        fi
+    else
+        result="$1/bin/activate"
+    fi
+    source $result
+    # PS1="(`basename \"$(dirname $VIRTUAL_ENV)\"`) $_OLD_VIRTUAL_PS1"
+}
+
+alias act="activate_venv"
+alias deact="deactivate"
+alias dact="deactivate"
+
+function pip () {
+    command pip $@
+    if [[ -n "$VIRTUAL_ENV" ]] && [[ ! $@ =~ .*freeze.* ]]; then
+        dir="$(dirname $VIRTUAL_ENV)"
+        if [ -f "$dir/requirements.txt" ]; then
+            echo "Updating requirements.txt"
+        else
+            echo "Creating requirements.txt"
+        fi
+        command pip freeze > "$dir/requirements.txt"
+    fi
+}
+
+
+
+function py () {
+	if [ $# == 0 ]; then
+		command python "*.py"
+	else
+		command python "$@"
+	fi
+}
+
+function pj () {
+    cd "$PROJECT_DIR/$1"
+}
+
+function pjr () {
+	if [ -n "$VIRTUAL_ENV" ]; then
+		prev_env="$VIRTUAL_ENV"
+	fi
+	if [ ! -n "$@" ]; then
+		pdir="$(pwd)"
+	else
+		pdir="$PROJECT_DIR/$1"
+	fi
+	if [ -d "$pdir/.venv" ]; then
+		activate_venv "$pdir/.venv"
+	fi
+	python "$pdir" "${@:2}" 2> /dev/null || python $pdir/*.py "${@:2}" 2> /dev/null || python $pdir "${@:2}"
+	if [ -n "$prev_env" ]; then
+		activate_venv "$prev_env"
+	else
+		deactivate
+	fi
+}
+
+# Determine size of a file or total size of a directory
+function fs() {
+	if du -b /dev/null > /dev/null 2>&1; then
+		local arg=-sbh;
+	else
+		local arg=-sh;
+	fi
+	if [[ -n "$@" ]]; then
+		du $arg -- "$@";
+	else
+		du $arg .[^.]* ./*;
+	fi;
+}
+
+# Create a data URL from a file
+function dataurl() {
+	local mimeType=$(file -b --mime-type "$1");
+	if [[ $mimeType == text/* ]]; then
+		mimeType="${mimeType};charset=utf-8";
+	fi
+	echo "data:${mimeType};base64,$(openssl base64 -in "$1" | tr -d '\n')";
+}
+
+# Start an HTTP server from a directory, optionally specifying the port
+function server() {
+	local port="${1:-8000}";
+	sleep 1 && open "http://localhost:${port}/" &
+	# Set the default Content-Type to `text/plain` instead of `application/octet-stream`
+	# And serve everything as UTF-8 (although not technically correct, this doesn’t break anything for binary files)
+	python -c $'import SimpleHTTPServer;\nmap = SimpleHTTPServer.SimpleHTTPRequestHandler.extensions_map;\nmap[""] = "text/plain";\nfor key, value in map.items():\n\tmap[key] = value + ";charset=UTF-8";\nSimpleHTTPServer.test();' "$port";
+}
+
+# Normalize `open` across Linux, macOS, and Windows.
+# This is needed to make the `o` function (see below) cross-platform.
+if [ ! $(uname -s) = 'Darwin' ]; then
+	if grep -q Microsoft /proc/version; then
+		# Ubuntu on Windows using the Linux subsystem
+		alias open='explorer.exe';
+	else
+		alias open='xdg-open';
+	fi
+fi
+
+# `o` with no arguments opens the current directory, otherwise opens the given
+# location
+function o() {
+	if [ $# -eq 0 ]; then
+		open .;
+	else
+		open "$@";
+	fi;
+}
+
+# `tre` is a shorthand for `tree` with hidden files and color enabled, ignoring
+# the `.git` directory, listing directories first. The output gets piped into
+# `less` with options to preserve color and line numbers, unless the output is
+# small enough for one screen.
+function tre() {
+	tree -aC -I '.git|node_modules|bower_components' --dirsfirst "$@" | less -FRNX;
+}
