@@ -27,6 +27,23 @@ function mkd() {
   mkdir -p "$@" && cd "$_"
 }
 
+if [ ! $(uname -s) = 'Darwin' ]; then
+  if grep -q Microsoft /proc/version; then
+    # Ubuntu on Windows using the Linux subsystem
+    alias open='explorer.exe'
+  else
+    alias open='xdg-open'
+  fi
+fi
+
+function o() {
+  if [ $# -eq 0 ]; then
+    open .
+  else
+    open "$@"
+  fi
+}
+
 # git shortened
 alias g=git
 
