@@ -23,6 +23,10 @@ tmux_shell() {
 }
 tmux_shell
 
+function mkd() {
+  mkdir -p "$@" && cd "$_"
+}
+
 # git shortened
 alias g=git
 
