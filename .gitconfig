@@ -1,0 +1,19 @@
+[user]
+	email = 535299+Garulf@users.noreply.github.com
+	name = Garulf
+[credential "https://github.com"]
+	helper = 
+	helper = !/etc/profiles/per-user/garulf/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/etc/profiles/per-user/garulf/bin/gh auth git-credential
+[maintenance]
+	repo = /home/garulf/Repos/znap
+	repo = /home/garulf/Repos/zsh-users/zsh-autosuggestions
+[alias]
+	ac = !git add -A && git commit -m
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
