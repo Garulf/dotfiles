@@ -75,7 +75,7 @@ alias mpv='mpv --save-position-on-quit'
 if command -v nvim &>/dev/null; then
   alias vi="v"
   alias vim="v"
-  alias v="vc"
+  alias v="vz"
 fi
 
 # Editor configs
