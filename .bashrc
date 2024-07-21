@@ -75,9 +75,10 @@ alias mpv='mpv --save-position-on-quit'
 if command -v nvim &>/dev/null; then
   alias vi="v"
   alias vim="v"
-  alias v="vz"
+  alias v="vc"
 fi
 
+# Editor configs
 alias vz="NVIM_APPNAME=nvim-lazyvim nvim"
 alias vc="NVIM_APPNAME=nvim-nvchad nvim"
 
