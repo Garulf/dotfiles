@@ -36,7 +36,7 @@ dunstctl set-paused true &
 #   --image /dev/stdin \
 #   --nofork
 
-# tmux lock-server
+tmux lock-session
 
 playerctl -a pause
 i3lock-color -c 00000000 --nofork &
