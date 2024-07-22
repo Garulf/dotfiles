@@ -116,7 +116,7 @@ znap source MichaelAquilina/zsh-auto-notify
 znap source Game4Move78/zsh-bitwarden
 
 eval "$(starship init zsh)"
-if command -v zoxide > /dev/null; then 
+if command -v zoxide > /dev/null; then
   eval "$(zoxide init zsh --cmd cd)"
 fi
 
@@ -128,6 +128,14 @@ fi
 # Aliases
 alias tv-audio="pactl set-card-profile 48 output:hdmi-stereo-extra1"
 alias default-audio="pactl set-card-profile 48 output:hdmi-stereo"
+
+# Git aliases
+alias g="git"
+alias ga="git add"
+alias gc="git commit -m"
+alias gp="git push"
+alias gac="!git add -A && git commit -m"
+alias gacp=""
 
 # functions
 function gc() {
