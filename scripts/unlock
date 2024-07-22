@@ -4,3 +4,6 @@ dunstctl set-paused false
 # picom &
 /home/garulf/scripts/brightness 1
 eww close lockscreen
+
+killall cmatrix
+killall vlock-main
