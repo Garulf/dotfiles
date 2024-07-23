@@ -1,4 +1,4 @@
-pidof i3lock && \
+pidof i3lock-color && \
   exit 1
 
 
@@ -39,7 +39,7 @@ dunstctl set-paused true &
 tmux lock-server
 
 playerctl -a pause
-i3lock-color -c 00000000 --nofork &
+i3lock-color -e -c 00000000 --nofork &
 bpid=$!
 
 # Ensure eww widgt is displayed after i3lock
