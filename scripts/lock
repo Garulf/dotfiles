@@ -43,7 +43,7 @@ i3lock-color -e -c 00000000 --nofork &
 bpid=$!
 
 # Ensure eww widgt is displayed after i3lock
-until pidof i3lock-color; do sleep 15; done
+until pidof i3lock-color; do sleep 1; done
 eww open lockscreen
 
 wait $bpid
