@@ -38,7 +38,7 @@ dunstctl set-paused true &
 
 tmux lock-server
 
-playerctl -a pause
+# playerctl -a pause
 i3lock-color -e -c 00000000 --nofork &
 bpid=$!
 
