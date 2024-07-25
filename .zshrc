@@ -137,14 +137,6 @@ alias gp="git push"
 gac() { git add -v . && git commit -m $1 }
 alias gacp="gac && gp"
 
-# functions
-function gc() {
-  # parse user repo from url
-  local user=$(echo $1 | cut -d'/' -f4)
-  local repo=$(echo $1 | cut -d'/' -f5 | cut -d'.' -f1)
-  mkdir -p ~/github/$user
-  git clone $1 ~/github/$user/$repo
-}
 
 # Created by `pipx` on 2024-05-24 14:50:29
 export PATH="$PATH:/home/garulf/.local/bin"
