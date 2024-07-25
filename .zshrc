@@ -131,11 +131,11 @@ alias default-audio="pactl set-card-profile 48 output:hdmi-stereo"
 
 # Git aliases
 alias g="git"
-alias ga="git add"
+ga() { git add -v ${@:-.} }
 alias gc="git commit -m"
 alias gp="git push"
-alias gac="!git add -A && git commit -m"
-alias gacp=""
+gac() { git add -v . && git commit -m $1 }
+alias gacp="gac && gp"
 
 # functions
 function gc() {
