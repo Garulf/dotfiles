@@ -183,7 +183,7 @@ element-text.selected {
 
 element-index {
     background-color:            transparent;
-    text-color:                  @background-alt;
+    text-color:                  inherit;
     vertical-align:              0.5;
     horizontal-align:            1.0;
     margin:                      10px;
