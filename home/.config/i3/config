@@ -67,4 +67,3 @@ gaps inner $inner_gaps
 
 
 # bindsym $mod+shift+f gaps horizontal current set 350
-

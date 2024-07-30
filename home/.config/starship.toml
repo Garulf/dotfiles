@@ -121,7 +121,7 @@ map_symbol = true
 disabled = false
 
 [cmd_duration]
-disabled = true 
+disabled = true
 style = "text"
 format = ' [$duration]($style)'
 

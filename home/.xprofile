@@ -13,4 +13,3 @@ pidof steam || steam -nochatui -nofriendsui -silent &
 # start eww daemon
 eww daemon &
 mpris-notifier &
-
