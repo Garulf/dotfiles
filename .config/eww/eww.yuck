@@ -1,0 +1,426 @@
+(defvar os_glyph "")
+
+
+
+(defwidget sidestuff []
+  (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
+    (metric :label "🔊"
+            :value volume
+            :onchange "amixer -D pulse sset Master {}%")
+    (metric :label ""
+            :value {EWW_RAM.used_mem_perc}
+            :onchange "")
+    (metric :label "💾"
+            :value {round((1 - (EWW_DISK["/"].free / EWW_DISK["/"].total)) * 100, 0)}
+            :onchange "")
+    time
+))
+
+(defwidget os_icon [glyph]
+  (box :class "os-icon"
+       :orientation "h"
+       :space-evenly false
+    (box :class "icon" glyph)))
+
+
+
+(defwidget music []
+  (box :class "music"
+       :orientation "h"
+       :space-evenly false
+       :halign "center"
+    {music != "" ? "🎵${music}" : ""}))
+
+
+(defwidget metric [label value onchange]
+  (box :orientation "h"
+       :class "metric"
+       :space-evenly false
+    (box :class "label" label)
+    (scale :min 0
+           :max 101
+           :active {onchange != ""}
+           :value value
+           :onchange onchange)))
+
+(deflisten music :initial ""
+  "playerctl --follow metadata --format '{{ artist }} - {{ title }}' || true")
+
+(defpoll volume :interval "1s"
+  "scripts/getvol")
+
+(defpoll time :interval "10s"
+  "date '+%H:%M %b %d, %Y'")
+
+(defwindow bar
+  :monitor 0
+  :windowtype "dock"
+  :geometry (geometry :x "0%"
+                      :y "0%"
+                      :width "90%"
+                      :height "12px"
+                      :anchor "top center")
+  :reserve (struts :side "top" :distance "4%")
+  (bar))
+
+(defwindow desktop-clock
+  :monitor 0
+  :geometry (geometry :x "8%"
+                      :y "-8%"
+                      :width "512px"
+                      :height "256px"
+                      :anchor "bottom left")
+  :windowtype "desktop"
+  :wm-ignore true
+  :stacking "bg"
+  (day-clock))
+
+(defwidget day-clock []
+  (box :class "day-clock"
+       :orientation "v"
+       :space-evenly true
+       :halign "start"
+    (date)
+    (clock)))
+
+(defwidget clock []
+  (box :class "clock"
+       :orientation "h"
+       :space-evenly false
+       :halign "center"
+    clock-time))
+
+(defwidget date []
+  (box :class "date"
+       :orientation "h"
+       :space-evenly false
+       :halign "center"
+    day))
+
+(defwindow lockscreen
+  :monitor 0
+  :geometry (geometry :x "0%"
+                      :y "0%"
+                      :width "100%"
+                      :height "100%")
+  :windowtype "desktop"
+  :stacking "bg"
+  :wm-ignore true
+  (lock-elements))
+
+(defwidget lock-upper-third []
+  (box :class "lock-upper-third"
+       :orientation "v"
+       :space-evenly false
+       :spacing 100
+       :halign "center"
+       :valign "center"
+    (lock-icon)
+    (lock-date-time)
+  )
+)
+
+
+(defwidget lock-lower-half []
+  (box :class "lock-lower-half"
+       :orientation "v"
+       :space-evenly true
+       :halign "center"
+       :valign "center"
+    (lock-message)
+)
+)
+
+(defwidget lock-elements []
+  (box :class "lock-elements"
+       :orientation "v"
+       :space-evenly "true"
+       :halign "center"
+       :valign "fill"
+    (lock-upper-third)
+    (lock-lower-half)
+)
+)
+
+(defwidget lock-icon []
+  (image :class lock-icon
+         :path "/home/garulf/Downloads/lock-solid.svg"
+         :image-width 60
+         :image-height 60
+         :class "lock-icon"
+         :halign "center"
+         :valign "start"
+  )
+)
+
+
+(defwidget lock-clock []
+  (box :class "lock-clock"
+       :orientation "v"
+       :valign "center"
+       (clock))
+)
+
+
+(defwidget lock-date-time []
+  (box :class "lock-date"
+       :orientation "v"
+       :valign "start"
+       :spacing -100
+       (clock)
+       lock-date
+)
+)
+
+(defwidget lock-circle []
+  (image :path "/home/garulf/Downloads/circle-regular.svg"
+         :image-width 160
+         :image-height 160
+         :class "lock-circle"
+         :halign "center"
+  )
+)
+
+(defwidget lock-message []
+  (box :class "lock-message"
+       :orientation "v"
+       :valign "center"
+    (label :class "lock-message-1"
+       :orientation "h"
+       :halign "center"
+       :valign "center"
+       :wrap "true"
+       :justify: "right"
+       :text "Life is really simple, but we insist ")
+    (label :class "lock-message-2"
+       :orientation "h"
+       :halign "center"
+       :valign "center"
+       :wrap "true"
+       :justify: "right"
+       :text "on making it complicated.")
+    (label :class "lock-message-author"
+       :orientation "h"
+       :halign "center"
+       :valign "center"
+       :wrap "true"
+       :justify: "right"
+       :text " -Confucius")
+  )
+)
+
+
+(defpoll day :interval "300s"
+  "date '+%A'")
+
+(defpoll lock-date :interval "600s"
+  "date '+%A, %b %d'")
+
+(defpoll clock-time :interval "10s"
+  "date '+%-I:%M %p'")
+
+
+(defwindow steam
+  :monitor 0
+  :geometry (geometry :x "0%"
+                      :y "60%"
+                      :width "100%"
+                      :height "30%")
+  :windowtype "desktop"
+  :stacking "bg"
+  :wm-ignore true
+  (games-row))
+
+(defwidget game-art [library-cache appid]
+  (button :class "game-art"
+       :halign "center"
+       :width 300
+       :height 450
+       :timeout "1800ms"
+       :onclick "steam steam://rungameid/${appid}"
+       :style "background-image: url('${library-cache}/${appid}_library_600x900.jpg')"
+  )
+)
+
+(defwidget games-row []
+  (box :class "games-row"
+       :orientation "h"
+       :space-evenly true
+       :halign "center"
+       :valign "center"
+       :spacing 10
+    (game-art :library-cache "/home/garulf/.steam/steam/appcache/librarycache"
+              :appid "1091500"
+    )
+    (game-art :library-cache "/home/garulf/.steam/steam/appcache/librarycache"
+              :appid "1716740"
+    )
+  )
+)
+
+
+(defwindow volume-hud
+  :monitor 0
+  :geometry (geometry :x "0%"
+                      :y "0%"
+                      :width "256px"
+                      :height "256px"
+                      :anchor "center center")
+  :windowtype "dialog"
+  :stacking "fg"
+  :wm-ignore true
+  (volume-hud-elements))
+
+
+(defwidget volume-hud-elements []
+  (box :class "volume-hud-elements"
+       :orientation "v"
+       :space-evenly false
+       :halign "center"
+       :valign "center"
+       :height 256
+       :width 256
+    (volume-hud-icon)
+    (volume-hud-slider)
+  )
+)
+
+(defvar volume-icon "/home/garulf/Downloads/volume-up-solid.svg")
+
+(defwidget volume-hud-icon []
+  (image :class volume-hud-icon
+         :path volume-icon
+         :class "volume-hud-icon"
+         :halign "center"
+         :image-width 256
+         :valign "start"
+  )
+)
+
+;; (defpoll volume-level
+;;   :interval "0s"
+;;   "pactl get-sink-volume @DEFAULT_SINK@ | awk 'NR==1{print $5}' | tr -d '%'"
+;; )
+
+(defvar volume-level 50)
+(defvar vol-sessions 0)
+
+(defwidget volume-hud-slider []
+  (scale :class "volume-hud-slider"
+         :min 0
+         :max 100
+         :value volume-level
+  )
+)
+
+
+(defwindow status-bar
+  :monitor 0
+  :windowtype "dock"
+  :geometry (geometry :x "0%"
+                      :y "0%"
+                      :width "90%"
+                      :height "38px"
+                      :anchor "top center")
+  :reserve (struts :side "top" :distance "4%")
+  (bar))
+
+
+
+(defwidget bar []
+  (centerbox :orientation "h"
+    (workspaces)
+    (music)
+    (sidestuff)
+))
+
+(defwidget system []
+  (box :class "system"
+       :orientation "h"
+       :space-evenly false
+       :halign "center"
+    (label :text "" :class "system-icon")
+    (label :text "Albus" :class "system-name")
+)
+)
+
+(defwidget workspace []
+  (box :class "workspace"
+       :orientation "h"
+       :space-evenly false
+       :halign "center"
+    (label :text "Main" :class "workspace-title")
+    (label :text "1" :class "workspace-number")
+  )
+)
+
+(defwidget workspaces []
+  (box :class "workspaces"
+       :orientation "h"
+       :space-evenly false
+       :halign "start"
+       :spacing 10
+    (system)
+    (workspace)
+  )
+)
+
+(defwindow weather-widget
+  :monitor 0
+  :geometry (geometry :x "0%"
+                      :y "0%"
+                      :width "95%"
+                      :height "95%")
+  :windowtype "desktop"
+  :stacking "bg"
+  :wm-ignore true
+  (weather-elements)
+)
+
+
+(defwidget weather-elements []
+  (box :class "weather-elements"
+       :orientation "h"
+       :space-evenly false
+       :halign "end"
+       :valign "end"
+    (weather-icon)
+    (weather-info)
+  )
+)
+
+(defwidget weather-icon []
+  (image :class weather-icon
+         :path "/home/garulf/Downloads/sun.png"
+         :class "weather-icon"
+         :halign "center"
+         :image-width 148
+         :valign "start"
+  )
+)
+
+(defwidget weather-info []
+  (box :class "weather-info"
+       :orientation "v"
+       :valign "start"
+       :spacing 4
+    (label :text "Sunny" :class "weather-condition")
+    (label :text "75°F" :class "weather-temperature")
+  )
+)
+
+(deflisten notifs :initial ""
+  "python ~/Projects/eww_noti/main.py")
+
+(defwindow notifications
+  :monitor 0
+  :geometry (geometry :x "0%"
+                      :y "0%"
+                      :width "25%"
+                      :height "100%"
+                      :anchor "top right")
+  :windowtype "dock"
+  :stacking "fg"
+  :wm-ignore true
+  (notification)
+)
