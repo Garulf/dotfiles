@@ -1,2 +1,0 @@
-color="$(/run/current-system/sw/bin/xcolor)"
-notify-send -a xcolor "Picked color" "$color"; echo "$color" | tr -d '\n' | xclip -sel clip

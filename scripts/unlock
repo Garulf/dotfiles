@@ -1,9 +1,0 @@
-$HOME/scripts/openrgb.sh on &
-openrgb --client -p /home/garulf/.openrgb.orp 1> /dev/null &
-dunstctl set-paused false
-# picom &
-/home/garulf/scripts/brightness 1
-eww close lockscreen
-
-killall cmatrix
-killall vlock-main
