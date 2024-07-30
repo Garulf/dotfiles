@@ -9,7 +9,7 @@ xidlehook \
    '/home/garulf/scripts/brightness .5' \
    '/home/garulf/scripts/brightness 1' \
  --timer 10 \
-   'xset dpms force off; tmux lock-server' \
+   'xset dpms force off' \
    '/home/garulf/scripts/brightness 1' \
  --timer 3600 \
    'systemctl suspend' \
@@ -36,7 +36,7 @@ dunstctl set-paused true &
 #   --image /dev/stdin \
 #   --nofork
 
-tmux lock-server
+# tmux lock-server
 
 # playerctl -a pause
 i3lock-color -e -c 00000000 --nofork &
