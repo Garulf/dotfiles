@@ -1,8 +1,5 @@
 /home/garulf/.screenlayout/apply_layout.sh &
 
-# set default audio output
-pactl set-default-sink alsa_output.pci-0000_0a_00.1.hdmi-stereo-extra1 &
-
 pidof discord || discord --start-minimized &
 openrgb -p /home/garulf/.config/OpenRGB/Albus.orp && openrgb --startminimized &
 
@@ -12,4 +9,3 @@ pidof steam || steam -nochatui -nofriendsui -silent &
 # ckb-next -b &
 # start eww daemon
 eww daemon &
-mpris-notifier &
