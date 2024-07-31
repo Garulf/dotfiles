@@ -12,6 +12,7 @@
 	repo = /home/garulf/Repos/zsh-users/zsh-autosuggestions
 [alias]
 	ac = !git add -A && git commit -m
+  ignore = "!gitignore(){ curl https://www.gitignore.io/api/$1; }; gitignore"
 [filter "lfs"]
 	required = true
 	clean = git-lfs clean -- %f
