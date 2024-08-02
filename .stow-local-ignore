@@ -26,3 +26,5 @@ _darcs
 
 # ignore tmux plugins
 **/tmux/plugins/
+
+^/activate.sh
