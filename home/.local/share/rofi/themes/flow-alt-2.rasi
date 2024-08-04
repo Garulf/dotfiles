@@ -87,16 +87,16 @@ textbox-input {
 }
 
 prompt {
-    enabled:                     false;
+    enabled:                     true;
     background-color:            inherit;
     text-color:                  inherit;
 }
 textbox-prompt-colon {
     enabled:                     true;
-    expand:                      false;
+    expand:                      true;
     str:                         "::";
     background-color:            inherit;
-    text-color:                  inherit;
+    text-color:                  @foreground;
 }
 entry {
     enabled:                     true;

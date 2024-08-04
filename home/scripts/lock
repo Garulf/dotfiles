@@ -1,3 +1,4 @@
+#!/bin/sh
 pidof i3lock-color && \
   exit 1
 
