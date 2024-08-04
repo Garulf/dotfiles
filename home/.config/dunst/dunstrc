@@ -178,7 +178,7 @@
     #   %n  progress value if set without any extra characters
     #   %%  Literal %
     # Markup is allowed
-    format = "<b>%s</b> <i>%a</i>\n%b"
+    format = "<span font_size='large' font_weight='heavy'>%s</span> <span foreground='#9399b2' font_size='xx-small' font_weight='light' font_style='italic'>%a</span>\n<span foreground='#bac2de'>%b</span>"
 
     # Alignment of message text.
     # Possible values are "left", "center" and "right".
@@ -207,7 +207,7 @@
     hide_duplicate_count = false
 
     # Display indicators for URLs (U) and actions (A).
-    show_indicators = yes
+    show_indicators = no 
 
     ### Icons ###
 
@@ -472,7 +472,7 @@ highlight = "#CDD6F4"
 
 [urgency_low]
 background = "#3d354b"
-foreground = "#CDD6F4"
+foreground = "#cdd6f4"
 
 [urgency_normal]
 background = "#3d354b"
