@@ -178,7 +178,7 @@
     #   %n  progress value if set without any extra characters
     #   %%  Literal %
     # Markup is allowed
-    format = "<span font_size='large' font_weight='heavy'>%s</span> <span foreground='#a6adc8' font_size='xx-small' font_weight='light' font_style='italic'>%a</span>\n<span foreground='#bac2de'>%b</span>"
+    format = "<span font_size='large' font_weight='heavy'>%s</span> <span foreground='#a6adc8' font_size='xx-small' font_weight='light' font_style='italic'>%a</span>\n<span foreground='#bac2de' size='small'>%b</span>"
 
     # Alignment of message text.
     # Possible values are "left", "center" and "right".
