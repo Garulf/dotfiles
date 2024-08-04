@@ -147,18 +147,17 @@ element {
     padding:                     10px;
     border:                      0px solid;
     border-radius:               @radius;
-    border-color:                @selected;
     background-color:            transparent;
     text-color:                  @foreground;
     orientation:                 horizontal;
     cursor:                      pointer;
     children:                    [ "element-icon", "element-text", "element-index" ];
 }
-element normal.normal {
+element normal {
     background-color:            transparent;
     text-color:                  @foreground;
 }
-element selected.normal {
+element selected {
     background-color:            @selected;
     text-color:                  @foreground;
 }
