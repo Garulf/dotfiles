@@ -183,4 +183,6 @@ configuration {
 //@theme "/home/garulf/.local/share/rofi/themes/spotlight-dark.rasi"
 //@theme "/home/garulf/.local/share/rofi/themes/flow.rasi"
 //@theme "/home/garulf/.local/share/rofi/themes/game.rasi"
-@theme "/home/garulf/.local/share/rofi/themes/flow.rasi"
+//@theme "/home/garulf/.local/share/rofi/themes/flow.rasi"
+//@theme "/home/garulf/.local/share/rofi/themes/flow-alt.rasi"
+@theme "/home/garulf/.local/share/rofi/themes/flow-alt-2.rasi"
