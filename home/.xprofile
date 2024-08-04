@@ -1,4 +1,5 @@
 /home/garulf/.screenlayout/apply_layout.sh &
+export XCURSOR_SIZE=64
 
 pidof discord || discord --start-minimized &
 openrgb -p /home/garulf/.config/OpenRGB/Albus.orp && openrgb --startminimized &

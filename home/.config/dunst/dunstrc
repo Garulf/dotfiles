@@ -471,11 +471,11 @@ separator_color= frame
 highlight = "#CDD6F4"
 
 [urgency_low]
-background = "#1E1E2E"
+background = "#3d354b"
 foreground = "#CDD6F4"
 
 [urgency_normal]
-background = "#1E1E2E"
+background = "#3d354b"
 foreground = "#CDD6F4"
 
 [urgency_critical]

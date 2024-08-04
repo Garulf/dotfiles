@@ -25,7 +25,7 @@ configuration {
     selected:       #2B83A6FF;
     active:         #ABE9B3FF;
     urgent:         #F28FADFF;
-    font: "JetBrainsMono Nerd Font 18";
+    font: "JetBrainsMono Nerd Font 24";
 }
 
 
@@ -35,7 +35,7 @@ window {
     location:                    north;
     anchor:                      north;
     fullscreen:                  false;
-    width:                       750px;
+    width:                       35%;
     x-offset:                    0px;
     y-offset:                    40%;
 
@@ -104,7 +104,7 @@ entry {
     cursor:                      text;
     placeholder:                 "Search";
     placeholder-color:           @background-alt;
-    font:                        "JetBrainsMono Nerd Font 28";
+    font:                        "JetBrainsMono Nerd Font 50";
 }
 
 /*****----- Listview -----*****/
