@@ -412,9 +412,9 @@
 #    msg_urgency = critical
 #    fullscreen = show
 
-[fallback-icon]
-  icon = ""
-  default_icon = "help-about-symbolic"
+#[fallback-icon]
+#  icon = ""
+#  default_icon = "help-about-symbolic"
 
 #[espeak]
 #    summary = "*"
