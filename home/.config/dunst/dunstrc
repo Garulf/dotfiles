@@ -24,7 +24,7 @@
     # dynamic width from 0 to 300
     # width = (0, 300)
     # constant width of 300
-    width = (600,750)
+    width = (400,750)
 
     # The maximum height of a single notification, excluding the frame.
     height = 175
@@ -90,10 +90,10 @@
     separator_height = 2
 
     # Padding between text and separator.
-    padding = 16
+    padding = 20
 
     # Horizontal padding.
-    horizontal_padding = 16
+    horizontal_padding = 20
 
     # Padding between text and icon.
     text_icon_padding = 14
@@ -138,7 +138,7 @@
     ### Text ###
 
     # font = Monospace 8
-    font = "JetBrainsMono Nerd Font" 20
+    font = "JetBrainsMono Nerd Font" 14
 
     # The spacing between lines.  If the height is smaller than the
     # font height, it will get raised to the font height.
