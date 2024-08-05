@@ -1,0 +1,3 @@
+#!/bin/sh
+
+pw-play $HOME/.local/share/sounds/alert.mp3
