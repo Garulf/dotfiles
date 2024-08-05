@@ -1,3 +1,12 @@
 #!/bin/sh
 
 pw-play $HOME/.local/share/sounds/alert.mp3
+
+# Testing
+# if [ -z $DUNST_ICON_PATH ]; then
+#  curl -O -J --output-dir /tmp "https://hass.garulf.online/static/icons/favicon-192x192.png"
+#  dunstify -r $DUNST_ID -i /tmp/dunst_icon.png "$DUNST_SUMMARY" "$DUNST_BODY"
+#fi
+
+#touch ~/test.txt
+#echo $(env) >~/test.txt
