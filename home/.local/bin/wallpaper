@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ -z $1 ]; then
+  echo "Usage: wallpaper <path/to/image>"
+  exit 1
+fi
+
+if [ $XDG_SESSION_TYPE == "x11" ]; then
+  cp -f $1 ~/.background-image
+  feh --bg-fill --no-xinerama ~/.background-image
+fi
