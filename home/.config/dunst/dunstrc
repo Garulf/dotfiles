@@ -207,7 +207,7 @@
     hide_duplicate_count = false
 
     # Display indicators for URLs (U) and actions (A).
-    show_indicators = no 
+    show_indicators = no
 
     ### Icons ###
 
@@ -464,6 +464,10 @@
 #    set_stack_tag = "volume"
 #
 # vim: ft=cfg
+
+[play_sound]
+    summary = "*"
+    script = "$HOME/.local/bin/on_notify"
 
 [global]
 frame_color = "#89B4FA"
