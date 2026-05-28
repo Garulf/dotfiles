@@ -1,4 +1,4 @@
 #!/bin/sh
 
 git pull
-stow home --adopt && echo "dotfiles are now active!"
+stow home && echo "dotfiles are now active!"
