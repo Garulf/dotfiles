@@ -1,24 +1,18 @@
 is_tmux() {
-  if command -v tmux &>/dev/null &&
-    [ -n "$PS1" ] &&
-    [[ ! "$TERM" =~ screen ]] &&
-    [[ ! "$TERM" =~ tmux ]] &&
-    [ -z "$TMUX" ]; then
-    return 0
-  else
-    return 1
-  fi
+  command -v tmux &>/dev/null &&
+    [[ -n "$PS1" ]] &&
+    [[ ! "$TERM" =~ screen|tmux ]] &&
+    [[ -z "$TMUX" ]]
 }
 
 tmux_shell() {
-  if is_tmux; then
-    echo "Starting tmux..."
-    N=$(tmux ls | grep -v attached | head -1 | cut -d: -f1)
-    if [[ ! -z $N ]]; then
-      exec tmux attach -t $N 2>/dev/null
-    else
-      exec tmux
-    fi
+  is_tmux || return
+  local session
+  session=$(tmux ls 2>/dev/null | grep -v attached | head -1 | cut -d: -f1)
+  if [[ -n "$session" ]]; then
+    exec tmux attach -t "$session"
+  else
+    exec tmux
   fi
 }
 tmux_shell
