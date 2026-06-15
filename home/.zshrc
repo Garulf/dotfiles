@@ -34,20 +34,8 @@ if command -v zoxide > /dev/null; then
 fi
 
 # Shared configuration
-source "$HOME/.bashrc"
+[[ -f "$HOME/.functions" ]] && source "$HOME/.functions"
+[[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
 
-# Zsh-only aliases and functions
-alias tv-audio="pactl set-card-profile 48 output:hdmi-stereo-extra1"
-alias default-audio="pactl set-card-profile 48 output:hdmi-stereo"
-
-function ga() {
-  if [ "$#" -eq 0 ]; then
-    git add -v .
-  else
-    git add -v "$@"
-  fi
-}
-alias gc="git commit -m"
-alias gp="git push"
-function gac() { git add -v . && git commit -m "$1" }
-function gacp() { gac "$1" && git push }
+# Auto-attach tmux if appropriate
+tmux_shell

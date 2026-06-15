@@ -1,0 +1,41 @@
+# Git
+alias g='git'
+alias gc='git commit -m'
+alias gp='git push'
+
+# General aliases
+alias afk='tmux lock-server'
+alias ls='ls --color=auto -h -p'
+alias ll='ls -l --color=auto -h -p'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .....='cd ../../../..'
+alias ......='cd ../../../../..'
+
+# Reload the shell
+alias reload="exec ${SHELL} -l"
+alias rel="reload"
+
+# Applications
+alias mpv='mpv --save-position-on-quit'
+alias tv-audio="pactl set-card-profile 48 output:hdmi-stereo-extra1"
+alias default-audio="pactl set-card-profile 48 output:hdmi-stereo"
+
+# Editor configs
+if command -v nvim &>/dev/null; then
+  alias vi="v"
+  alias vim="v"
+  alias v="vz"
+fi
+alias vz="NVIM_APPNAME=nvim-lazyvim nvim"
+alias vc="NVIM_APPNAME=nvim-nvchad nvim"
+
+# OS-specific logic
+if [ ! "$(uname -s)" = 'Darwin' ]; then
+  if grep -q Microsoft /proc/version; then
+    alias open='explorer.exe'
+  else
+    alias open='xdg-open'
+  fi
+fi
