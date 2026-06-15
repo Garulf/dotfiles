@@ -14,9 +14,8 @@ znap source Game4Move78/zsh-bitwarden
 autoload -Uz compinit && compinit
 
 # History options
-HISTSIZE=5000
-HISTFILE=~/.zsh_history
-SAVEHIST=5000
+# HISTSIZE and SAVEHIST are inherited from .profile
+HISTFILE="$HOME/.zsh_history"
 setopt APPEND_HISTORY
 setopt SHARE_HISTORY
 setopt INC_APPEND_HISTORY
@@ -27,13 +26,15 @@ setopt AUTO_CD
 setopt CORRECT
 setopt NO_BEEP
 
-# Starship & Zoxide
-eval "$(starship init zsh)"
+# Load shared logic first
+if command -v starship > /dev/null; then
+  eval "$(starship init zsh)"
+fi
+
 if command -v zoxide > /dev/null; then
   eval "$(zoxide init zsh --cmd cd)"
 fi
 
-# Shared configuration
 [[ -f "$HOME/.functions" ]] && source "$HOME/.functions"
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
 
