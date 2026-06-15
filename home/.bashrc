@@ -1,3 +1,4 @@
+# Tmux auto-attach logic
 is_tmux() {
   command -v tmux &>/dev/null &&
     [[ -n "$PS1" ]] &&
@@ -17,10 +18,12 @@ tmux_shell() {
 }
 tmux_shell
 
+# Helper functions
 function mkd() {
   mkdir -p "$@" && cd "$_"
 }
 
+# OS-specific logic
 if [ ! $(uname -s) = 'Darwin' ]; then
   if grep -q Microsoft /proc/version; then
     # Ubuntu on Windows using the Linux subsystem
@@ -42,17 +45,13 @@ function tre() {
   tree -aC -I '.git|node_modules|bower_components' --dirsfirst "$@" | less -FRNX
 }
 
-# git shortened
+# Git
 alias g=git
 
-# Lock the screen (when going AFK) OSX only
-# alias afk="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend"
-
+# General aliases
 alias afk='tmux lock-server'
-
-alias ls='ls -G -h -p '
-alias ll='ls -l -G -h -p '
-
+alias ls='ls --color=auto -h -p'
+alias ll='ls -l --color=auto -h -p'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
@@ -62,7 +61,6 @@ alias ......='cd ../../../../..'
 # Reload the shell (i.e. invoke as a login shell)
 alias reload="exec ${SHELL} -l"
 alias rel="reload"
-alias ls="command ls $@ -a"
 
 alias mpv='mpv --save-position-on-quit'
 
@@ -83,7 +81,3 @@ cdv() {
   fi
   nvim "$1"
 }
-
-# sshs() { ssh $@ -t -- command -v tmux &> /dev/null || screen -R }
-
-#bindkey '^r' history-incremental-search-backward

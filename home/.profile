@@ -1,2 +1,2 @@
-export PATH="$PATH:/home/garulf/.local/bin"
+export PATH="$PATH:$HOME/.local/bin"
 export TMOUT=900
