@@ -2,7 +2,7 @@
 is_tmux() {
   command -v tmux &>/dev/null &&
     [[ -n "$PS1" ]] &&
-    [[ ! "$TERM" =~ screen|tmux ]] &&
+    [[ ! "$TERM" =~ (screen|tmux) ]] &&
     [[ -z "$TMUX" ]]
 }
 
