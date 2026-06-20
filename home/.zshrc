@@ -29,6 +29,8 @@ setopt NO_BEEP
 # Load shared logic first
 if command -v starship > /dev/null; then
   eval "$(starship init zsh)"
+else
+  PROMPT='%F{green}%n@%m%f %F{blue}%~%f %# '
 fi
 
 if command -v zoxide > /dev/null; then
