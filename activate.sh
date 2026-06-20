@@ -10,7 +10,7 @@ echo "${GREEN}Pulling latest changes...${NC}"
 git pull
 
 echo "${GREEN}Restowing dotfiles...${NC}"
-stow --restow home && echo "${GREEN}dotfiles are now active!${NC}"
+stow --restow --target="$HOME" home && echo "${GREEN}dotfiles are now active!${NC}"
 
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
     echo "${GREEN}Installing TPM...${NC}"
