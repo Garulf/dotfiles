@@ -2,6 +2,7 @@
 [[ -r "$HOME/.znap/znap.zsh" ]] ||
     git clone --depth 1 -- \
         https://github.com/marlonrichert/zsh-snap.git "$HOME/.znap"
+zstyle ':znap:*' repos-dir "$HOME/.znap"
 source "$HOME/.znap/znap.zsh"
 
 # Plugins
