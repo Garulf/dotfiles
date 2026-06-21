@@ -1,4 +1,5 @@
 **/tmux/plugins/
+home/.config/gh/hosts.yml
 *.bak
 *.orig
 *.auto
