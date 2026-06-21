@@ -1,8 +1,8 @@
 # Znap bootstrap
-[[ -r "$HOME/Repos/znap/znap.zsh" ]] ||
+[[ -r "$HOME/.znap/znap.zsh" ]] ||
     git clone --depth 1 -- \
-        https://github.com/marlonrichert/zsh-snap.git "$HOME/Repos/znap"
-source "$HOME/Repos/znap/znap.zsh"
+        https://github.com/marlonrichert/zsh-snap.git "$HOME/.znap"
+source "$HOME/.znap/znap.zsh"
 
 # Plugins
 znap source zsh-users/zsh-completions
