@@ -1,7 +1,8 @@
 # Tmux auto-attach logic
 is_tmux() {
+  # $- contains 'i' when shell is interactive (works in bash and zsh)
   command -v tmux &>/dev/null &&
-    [[ -n "$PS1" ]] &&
+    [[ $- == *i* ]] &&
     [[ ! "$TERM" =~ (screen|tmux) ]] &&
     [[ -z "$TMUX" ]]
 }
