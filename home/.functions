@@ -46,6 +46,21 @@ function ga() {
 function gac() { git add -v . && git commit -m "$1" }
 function gacp() { gac "$1" && git push }
 
+# Bitwarden wrapper — auto-unlocks if BW_SESSION is unset or expired
+function bw() {
+  if [[ -z "$BW_SESSION" ]]; then
+    local status
+    status=$(command bw status 2>/dev/null | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+    if [[ "$status" == "unauthenticated" ]]; then
+      export BW_SESSION=$(command bw login --raw)
+    else
+      export BW_SESSION=$(command bw unlock --raw)
+    fi
+    [[ -z "$BW_SESSION" ]] && return 1
+  fi
+  command bw "$@"
+}
+
 # Editor helpers
 cdv() {
   if [ -d "$1" ]; then
