@@ -27,16 +27,7 @@ setopt AUTO_CD
 setopt CORRECT
 setopt NO_BEEP
 
-# Load shared logic first
-if command -v starship > /dev/null; then
-  eval "$(starship init zsh)"
-else
-  PROMPT='%F{green}%n@%m%f %F{blue}%~%f %# '
-fi
-
-if command -v zoxide > /dev/null; then
-  eval "$(zoxide init zsh --cmd cd)"
-fi
+[[ -f "$HOME/.shell_common" ]] && source "$HOME/.shell_common"
 
 [[ -f "$HOME/.functions" ]] && source "$HOME/.functions"
 [[ -f "$HOME/.aliases" ]] && source "$HOME/.aliases"
