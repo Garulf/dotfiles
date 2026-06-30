@@ -4,6 +4,7 @@ cd "$(dirname "$0")"
 
 # Colors
 GREEN='\033[0;32m'
+RED='\033[0;31m'
 NC='\033[0m'
 
 if ! git diff --quiet || ! git diff --cached --quiet; then
@@ -17,7 +18,11 @@ git pull
 
 if [ "${STASHED:-0}" = "1" ]; then
   echo "${GREEN}Restoring stashed changes...${NC}"
-  git stash pop
+  if ! git stash pop; then
+    echo "${RED}Conflict while restoring stash. Resolve these files then run 'git stash drop':${NC}"
+    git diff --name-only --diff-filter=U
+    exit 1
+  fi
 fi
 
 echo "${GREEN}Restowing dotfiles...${NC}"
