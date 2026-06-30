@@ -26,7 +26,9 @@ if [ "${STASHED:-0}" = "1" ]; then
 fi
 
 echo "${GREEN}Restowing dotfiles...${NC}"
-stow --restow --target="$HOME" home && echo "${GREEN}dotfiles are now active!${NC}"
+stow --adopt --restow --target="$HOME" home
+git checkout -- .
+echo "${GREEN}dotfiles are now active!${NC}"
 
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
     echo "${GREEN}Installing TPM...${NC}"
