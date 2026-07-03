@@ -1,5 +1,9 @@
 **/tmux/plugins/
 home/.config/gh/hosts.yml
+home/.config/Bitwarden\ CLI/data.json
+home/.config/github-copilot/auth.db
+home/.config/github-copilot/auth.db-shm
+home/.config/github-copilot/auth.db-wal
 *.bak
 *.orig
 *.auto
