@@ -82,6 +82,31 @@ function bsudo() {
   echo "$password" | sudo -S -p '' "$@"
 }
 
+# Open (or create) ~/projects/<name> in tmux with claude and $EDITOR split
+function proj() {
+  local name="$1"
+  if [[ -z "$name" ]]; then
+    echo "usage: proj <project name>" >&2
+    return 1
+  fi
+
+  local dir="$HOME/projects/$name"
+  mkdir -p "$dir"
+
+  local editor="${EDITOR:-nvim}"
+  local tmux_cmd=new-session
+  local target=(-s "$name")
+  if [[ -n "$TMUX" ]]; then
+    tmux_cmd=new-window
+    target=(-n "$name")
+  fi
+
+  tmux "$tmux_cmd" "${target[@]}" -c "$dir" \; \
+    split-window -h -c "$dir" "$editor" \; \
+    select-pane -L \; \
+    send-keys "claude" Enter
+}
+
 # Editor helpers
 cdv() {
   if [ -d "$1" ]; then
