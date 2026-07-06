@@ -93,7 +93,7 @@ function proj() {
   local dir="$HOME/projects/$name"
   mkdir -p "$dir"
 
-  local editor="${EDITOR:-nvim}"
+  local editor="${EDITOR:-nvim} \"$dir\""
   local tmux_cmd=new-session
   local target=(-s "$name")
   if [[ -n "$TMUX" ]]; then
@@ -104,7 +104,7 @@ function proj() {
   tmux "$tmux_cmd" "${target[@]}" -c "$dir" \; \
     split-window -h -c "$dir" "$editor" \; \
     select-pane -L \; \
-    send-keys "claude" Enter
+    send-keys "cd \"$dir\" && claude" Enter
 }
 
 if [[ -n "$ZSH_VERSION" ]]; then
