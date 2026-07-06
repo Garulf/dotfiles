@@ -94,17 +94,18 @@ function proj() {
   mkdir -p "$dir"
 
   local editor="${EDITOR:-nvim} \"$dir\""
-  local tmux_cmd=new-session
-  local target=(-s "$name")
-  if [[ -n "$TMUX" ]]; then
-    tmux_cmd=new-window
-    target=(-n "$name")
-  fi
 
-  tmux "$tmux_cmd" "${target[@]}" -c "$dir" \; \
-    split-window -h -c "$dir" "$editor" \; \
-    select-pane -L \; \
-    send-keys "cd \"$dir\" && claude" Enter
+  if [[ -n "$TMUX" ]]; then
+    tmux rename-window "$name" \; \
+      send-keys "cd \"$dir\" && claude" Enter \; \
+      split-window -h -c "$dir" "$editor" \; \
+      select-pane -L
+  else
+    tmux new-session -s "$name" -c "$dir" \; \
+      split-window -h -c "$dir" "$editor" \; \
+      select-pane -L \; \
+      send-keys "cd \"$dir\" && claude" Enter
+  fi
 }
 
 if [[ -n "$ZSH_VERSION" && -o interactive ]] && (( ${+_comps} )); then
