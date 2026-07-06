@@ -14,6 +14,7 @@
 ## Custom Commands
 
 - `proj <name>`: Opens (creating if needed) `~/projects/<name>` in a tmux split with `claude` and `$EDITOR`. Tab-completes existing project directories.
+- `proj` (no args): Lists existing project directories under `~/projects`.
 
 ## Quick Start
 
