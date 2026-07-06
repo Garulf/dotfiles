@@ -107,6 +107,13 @@ function proj() {
     send-keys "claude" Enter
 }
 
+if [[ -n "$ZSH_VERSION" ]]; then
+  _proj() { _path_files -W "$HOME/projects" -/ }
+  # znap shadows compdef with a stub that silently drops calls made after
+  # compinit, so register directly in the completion registry instead
+  _comps[proj]=_proj
+fi
+
 # Editor helpers
 cdv() {
   if [ -d "$1" ]; then
