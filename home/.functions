@@ -86,8 +86,8 @@ function bsudo() {
 function proj() {
   local name="$1"
   if [[ -z "$name" ]]; then
-    echo "usage: proj <project name>" >&2
-    return 1
+    find "$HOME/projects" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null
+    return
   fi
 
   local dir="$HOME/projects/$name"
@@ -107,7 +107,7 @@ function proj() {
     send-keys "cd \"$dir\" && claude" Enter
 }
 
-if [[ -n "$ZSH_VERSION" ]]; then
+if [[ -n "$ZSH_VERSION" && -o interactive ]] && (( ${+_comps} )); then
   _proj() { _path_files -W "$HOME/projects" -/ }
   # znap shadows compdef with a stub that silently drops calls made after
   # compinit, so register directly in the completion registry instead
