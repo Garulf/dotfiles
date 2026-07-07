@@ -1,4 +1,8 @@
 **/tmux/plugins/
+home/.local/bin/
+home/.local/lib/
+home/.local/share/
+home/.local/state/
 home/.config/gh/hosts.yml
 home/.config/Bitwarden\ CLI/data.json
 home/.config/github-copilot/auth.db
