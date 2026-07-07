@@ -19,6 +19,11 @@
       }
     }
   },
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"$HOME/.claude/statusline-command.sh\""
+  },
+  "effortLevel": "medium",
   "theme": "dark",
   "preferredNotifChannel": "terminal_bell",
   "inputNeededNotifEnabled": true,
