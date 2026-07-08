@@ -3,6 +3,11 @@
     "commit": "",
     "pr": ""
   },
+  "model": "sonnet",
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"$HOME/.claude/statusline-command.sh\""
+  },
   "enabledPlugins": {
     "pyright-lsp@claude-plugins-official": true,
     "github@claude-plugins-official": true,
@@ -18,10 +23,6 @@
         "repo": "wondelai/skills"
       }
     }
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "bash \"$HOME/.claude/statusline-command.sh\""
   },
   "effortLevel": "medium",
   "theme": "dark",

@@ -111,11 +111,15 @@ recent_tokens=$(printf '%s' "$sums" | awk -F'\t' '{print $3+0}')
 
 humanize() {
   awk -v n="$1" 'BEGIN{
-    if (n >= 1000000) printf "%.1fM", n/1000000
-    else if (n >= 1000) printf "%.1fK", n/1000
+    if (n >= 1000000) printf "%.1fm", n/1000000
+    else if (n >= 1000) printf "%.1fk", n/1000
     else printf "%d", n
   }'
 }
+
+# ---- tokens-per-minute rate over the last 30 minutes (derived) ----
+tpm=$(awk -v r="$recent_tokens" 'BEGIN{printf "%.0f", r/30}')
+tpm_fmt=$(humanize "$tpm")
 
 # ---- ETA until the 5-hour limit is hit, based on the last-30-min token rate (derived) ----
 eta_str="-"
@@ -123,19 +127,12 @@ if [ -n "$five_pct" ] && [ -n "$five_resets" ] && awk "BEGIN{exit !($five_tokens
   rate_per_min=$(awk -v r="$recent_tokens" 'BEGIN{printf "%.4f", r/30}')
   budget=$(awk -v t="$five_tokens" -v p="$five_pct" 'BEGIN{printf "%.2f", t/(p/100)}')
   remaining=$(awk -v b="$budget" -v t="$five_tokens" 'BEGIN{printf "%.2f", b-t}')
-  reset_secs=$(( ${five_resets%.*} - NOW ))
-  [ "$reset_secs" -lt 0 ] && reset_secs=0
   if awk "BEGIN{exit !($rate_per_min>0.01)}" 2>/dev/null; then
     eta_min=$(awk -v rem="$remaining" -v rate="$rate_per_min" 'BEGIN{v=rem/rate; if (v<0) v=0; printf "%.0f", v}')
-    reset_min=$(( reset_secs / 60 ))
-    if [ "$eta_min" -lt "$reset_min" ] 2>/dev/null; then
-      if [ "$eta_min" -ge 60 ] 2>/dev/null; then
-        eta_str="$(( eta_min / 60 ))h$(( eta_min % 60 ))m"
-      else
-        eta_str="${eta_min}m"
-      fi
+    if [ "$eta_min" -ge 60 ] 2>/dev/null; then
+      eta_str="$(( eta_min / 60 ))h$(( eta_min % 60 ))m"
     else
-      eta_str="resets first"
+      eta_str="${eta_min}m"
     fi
   else
     eta_str="idle"
@@ -145,13 +142,15 @@ fi
 # ---- 5h reset time in US Eastern (directly reported resets_at, converted) ----
 reset_fmt=""
 if [ -n "$five_resets" ]; then
-  reset_fmt=$(TZ='America/New_York' date -d "@${five_resets%.*}" +'%-I:%M%p %Z' 2>/dev/null)
+  reset_fmt=$(TZ='America/New_York' date -d "@${five_resets%.*}" +'%-I:%M%p' 2>/dev/null)
   reset_secs_disp=$(( ${five_resets%.*} - NOW ))
   [ "$reset_secs_disp" -lt 0 ] && reset_secs_disp=0
-  reset_hours=$(( (reset_secs_disp + 1800) / 3600 ))
-  if [ "$reset_secs_disp" -lt 3600 ]; then
-    reset_hours_fmt="<1h"
+  if [ "$reset_secs_disp" -lt 60 ]; then
+    reset_hours_fmt="${reset_secs_disp}s"
+  elif [ "$reset_secs_disp" -lt 3600 ]; then
+    reset_hours_fmt="$(( reset_secs_disp / 60 ))m"
   else
+    reset_hours=$(( (reset_secs_disp + 1800) / 3600 ))
     reset_hours_fmt="${reset_hours}h"
   fi
   [ -n "$reset_fmt" ] && reset_fmt="${reset_fmt} (${reset_hours_fmt})"
@@ -161,6 +160,7 @@ fi
 parts=()
 parts+=("${CYAN}${model}${RESET}")
 [ -n "$effort" ] && parts+=("${DIM}${effort}${RESET}")
+parts+=("${DIM}${tpm_fmt} tpm${RESET}")
 
 if [ -n "$five_pct" ]; then
   c=$(color_for_pct "$five_pct")
