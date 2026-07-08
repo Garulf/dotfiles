@@ -5,3 +5,10 @@
 
 vim.keymap.set('n', '<tab>', '<cmd>bnext<cr>')
 vim.keymap.set('n', '<s-tab>', '<cmd>bprevious<cr>')
+
+vim.keymap.set('n', '<leader>e', function()
+  require('neo-tree.command').execute({ action = 'focus', dir = LazyVim.root() })
+end, { desc = 'Focus Explorer NeoTree' })
+vim.keymap.set('n', '<leader>E', function()
+  require('neo-tree.command').execute({ toggle = true, dir = LazyVim.root() })
+end, { desc = 'Toggle Explorer NeoTree' })
