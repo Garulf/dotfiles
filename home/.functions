@@ -82,8 +82,34 @@ function bsudo() {
   echo "$password" | sudo -S -p '' "$@"
 }
 
-# cd to (or create) ~/projects/<name>
+# cd to (or create) ~/projects/<name>, or clone a repo with -c <owner/repo|url>
 function proj() {
+  if [[ "$1" == "-c" ]]; then
+    local spec="$2"
+    if [[ -z "$spec" ]]; then
+      echo "usage: proj -c <owner/repo|url>" >&2
+      return 1
+    fi
+
+    # gh resolves the repo's canonical case (e.g. garulf/steam-search -> Garulf/Steam-Search)
+    local full_name
+    full_name=$(gh repo view "$spec" --json nameWithOwner -q .nameWithOwner 2>/dev/null)
+    if [[ -z "$full_name" ]]; then
+      echo "proj: could not resolve repo '$spec'" >&2
+      return 1
+    fi
+
+    local dir="$HOME/projects/${full_name#*/}"
+    if [[ -d "$dir" ]]; then
+      cd "$dir"
+      return
+    fi
+
+    gh repo clone "$full_name" "$dir" || return
+    cd "$dir"
+    return
+  fi
+
   local name="$1"
   if [[ -z "$name" ]]; then
     find "$HOME/projects" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null
