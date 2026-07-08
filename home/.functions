@@ -82,7 +82,7 @@ function bsudo() {
   echo "$password" | sudo -S -p '' "$@"
 }
 
-# Open (or create) ~/projects/<name> in tmux with claude and $EDITOR split
+# cd to (or create) ~/projects/<name>
 function proj() {
   local name="$1"
   if [[ -z "$name" ]]; then
@@ -92,20 +92,7 @@ function proj() {
 
   local dir="$HOME/projects/$name"
   mkdir -p "$dir"
-
-  local editor="${EDITOR:-nvim} \"$dir\""
-
-  if [[ -n "$TMUX" ]]; then
-    tmux rename-window "$name" \; \
-      send-keys "cd \"$dir\" && claude" Enter \; \
-      split-window -h -c "$dir" "$editor" \; \
-      select-pane -L
-  else
-    tmux new-session -s "$name" -c "$dir" \; \
-      split-window -h -c "$dir" "$editor" \; \
-      select-pane -L \; \
-      send-keys "cd \"$dir\" && claude" Enter
-  fi
+  cd "$dir"
 }
 
 if [[ -n "$ZSH_VERSION" && -o interactive ]] && (( ${+_comps} )); then
