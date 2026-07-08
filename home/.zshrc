@@ -27,6 +27,11 @@ setopt AUTO_CD
 setopt CORRECT
 setopt NO_BEEP
 
+# EDITOR="...nvim..." contains "vi", which makes zsh auto-select vi
+# keybindings (breaking Ctrl+R history search, etc.) unless forced back to
+# emacs bindings here.
+bindkey -e
+
 [[ -f "$HOME/.shell_common" ]] && source "$HOME/.shell_common"
 
 [[ -f "$HOME/.functions" ]] && source "$HOME/.functions"
