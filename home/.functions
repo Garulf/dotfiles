@@ -128,6 +128,36 @@ if [[ -n "$ZSH_VERSION" && -o interactive ]] && (( ${+_comps} )); then
   _comps[proj]=_proj
 fi
 
+# Fetch a .gitignore for the given space-separated languages/tools (e.g. `gitignore python node vim`)
+# and write it to ./.gitignore, or append with `gitignore -a <names...>`.
+function gitignore() {
+  local append=0
+  if [[ "$1" == "-a" ]]; then
+    append=1
+    shift
+  fi
+
+  if [[ $# -eq 0 ]]; then
+    echo "usage: gitignore [-a] <name> [name...]" >&2
+    return 1
+  fi
+
+  local query
+  query=$(IFS=,; echo "$*")
+
+  local content
+  content=$(curl -sf "https://www.gitignore.io/api/${query}") || {
+    echo "gitignore: failed to fetch template for: $*" >&2
+    return 1
+  }
+
+  if (( append )); then
+    echo "$content" >>.gitignore
+  else
+    echo "$content" >.gitignore
+  fi
+}
+
 # Editor helpers
 cdv() {
   if [ -d "$1" ]; then
