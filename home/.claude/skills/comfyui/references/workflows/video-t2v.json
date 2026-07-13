@@ -1,0 +1,22 @@
+{
+  "1": {
+    "class_type": "PLACEHOLDER_VIDEO_MODEL_LOADER",
+    "inputs": {},
+    "_meta": { "title": "Replace with installed video loader discovered via comfy.py nodes --search wan" }
+  },
+  "2": {
+    "class_type": "PLACEHOLDER_TEXT_ENCODE",
+    "inputs": {},
+    "_meta": { "title": "Replace with the text-encode node the video model expects" }
+  },
+  "3": {
+    "class_type": "PLACEHOLDER_VIDEO_SAMPLER",
+    "inputs": {},
+    "_meta": { "title": "Replace with the sampler node for this video model" }
+  },
+  "4": {
+    "class_type": "PLACEHOLDER_VIDEO_DECODE_OR_COMBINE",
+    "inputs": {},
+    "_meta": { "title": "Replace with decode/VHS combine node that writes mp4/webp/gif" }
+  }
+}

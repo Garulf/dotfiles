@@ -1,0 +1,53 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": { "ckpt_name": "PLACEHOLDER_CHECKPOINT" },
+    "_meta": { "title": "Load Checkpoint" }
+  },
+  "2": {
+    "class_type": "CLIPTextEncode",
+    "inputs": { "text": "PLACEHOLDER_POSITIVE_PROMPT", "clip": ["1", 1] },
+    "_meta": { "title": "Positive" }
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": { "text": "PLACEHOLDER_NEGATIVE_PROMPT", "clip": ["1", 1] },
+    "_meta": { "title": "Negative" }
+  },
+  "5": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 20,
+      "cfg": 7.0,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 0.6,
+      "model": ["1", 0],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "latent_image": ["9", 0]
+    },
+    "_meta": { "title": "KSampler" }
+  },
+  "6": {
+    "class_type": "VAEDecode",
+    "inputs": { "samples": ["5", 0], "vae": ["1", 2] },
+    "_meta": { "title": "VAE Decode" }
+  },
+  "7": {
+    "class_type": "SaveImage",
+    "inputs": { "images": ["6", 0], "filename_prefix": "comfy-skill" },
+    "_meta": { "title": "Save Image" }
+  },
+  "8": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "PLACEHOLDER_UPLOADED_IMAGE" },
+    "_meta": { "title": "Load Image" }
+  },
+  "9": {
+    "class_type": "VAEEncode",
+    "inputs": { "pixels": ["8", 0], "vae": ["1", 2] },
+    "_meta": { "title": "VAE Encode" }
+  }
+}
