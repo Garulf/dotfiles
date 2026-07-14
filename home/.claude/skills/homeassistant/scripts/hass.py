@@ -62,10 +62,6 @@ def _maybe_json(text):
     try: return json.loads(text)
     except ValueError: return text
 
-def _short(base_url, token, entity):
-    st, body = api("GET", base_url, token, "/api/states/" + entity)
-    return st, body
-
 def cmd_ping(args):
     base_url, token = resolve_config(args)
     try:
@@ -187,6 +183,8 @@ def cmd_history(args):
     ts = _iso_hours_ago(args.hours)
     path = f"/api/history/period/{ts}?filter_entity_id={args.entity_id}&minimal_response"
     st, body = api("GET", base_url, token, path)
+    if st >= 300:
+        print(f"Error {st}: {body}", file=sys.stderr); return 1
     if not isinstance(body, list) or not body:
         print("(no history)"); return 0
     for point in body[0]:
@@ -237,6 +235,8 @@ def cmd_automation(args):
     base_url, token = resolve_config(args)
     if args.action == "list":
         st, body = api("GET", base_url, token, "/api/states")
+        if not isinstance(body, list):
+            print(f"Unexpected response ({st}): {body}", file=sys.stderr); return 1
         for e in body:
             if e["entity_id"].startswith("automation."):
                 fn = e.get("attributes", {}).get("friendly_name", "")
@@ -254,6 +254,8 @@ def cmd_automation(args):
         st, _ = api("POST", base_url, token, "/api/services/automation/reload", {})
         print("reloaded" if st < 300 else f"error {st}"); return 0 if st < 300 else 1
     if args.action == "set":
+        if not args.file:
+            print("REFUSED: 'automation set' requires --file <path>", file=sys.stderr); return 1
         with open(args.file) as f:
             cfg = json.load(f)
         st, body = api("POST", base_url, token,
@@ -265,6 +267,8 @@ def cmd_scene(args):
     base_url, token = resolve_config(args)
     if args.action == "list":
         st, body = api("GET", base_url, token, "/api/states")
+        if not isinstance(body, list):
+            print(f"Unexpected response ({st}): {body}", file=sys.stderr); return 1
         for e in body:
             if e["entity_id"].startswith("scene."):
                 print(e["entity_id"])
@@ -278,6 +282,8 @@ def cmd_script(args):
     base_url, token = resolve_config(args)
     if args.action == "list":
         st, body = api("GET", base_url, token, "/api/states")
+        if not isinstance(body, list):
+            print(f"Unexpected response ({st}): {body}", file=sys.stderr); return 1
         for e in body:
             if e["entity_id"].startswith("script."):
                 print(e["entity_id"])
