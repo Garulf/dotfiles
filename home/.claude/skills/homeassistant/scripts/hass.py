@@ -179,8 +179,55 @@ def register_control(sub):
     s.add_argument("--domain")
     s.set_defaults(func=cmd_services)
 
+def _iso_hours_ago(n):
+    return (datetime.now(timezone.utc) - timedelta(hours=n)).isoformat(timespec="seconds")
+
+def cmd_history(args):
+    base_url, token = resolve_config(args)
+    ts = _iso_hours_ago(args.hours)
+    path = f"/api/history/period/{ts}?filter_entity_id={args.entity_id}&minimal_response"
+    st, body = api("GET", base_url, token, path)
+    if not isinstance(body, list) or not body:
+        print("(no history)"); return 0
+    for point in body[0]:
+        print(f"{point.get('last_changed','')}  {point.get('state','')}")
+    return 0
+
+def cmd_logbook(args):
+    base_url, token = resolve_config(args)
+    ts = _iso_hours_ago(args.hours)
+    path = f"/api/logbook/{ts}"
+    if args.entity:
+        path += f"?entity={args.entity}"
+    st, body = api("GET", base_url, token, path)
+    if not isinstance(body, list):
+        print(f"Unexpected response ({st})", file=sys.stderr); return 1
+    for e in body:
+        print(f"{e.get('when','')}  {e.get('name','')}: {e.get('message','')}")
+    return 0
+
+def cmd_template(args):
+    base_url, token = resolve_config(args)
+    st, body = api("POST", base_url, token, "/api/template", {"template": args.template})
+    if st == 400:
+        print(f"Template error (400): {body}", file=sys.stderr); return 1
+    print(body)
+    return 0
+
+def register_query(sub):
+    h = sub.add_parser("history")
+    h.add_argument("entity_id"); h.add_argument("--hours", type=int, default=24)
+    h.set_defaults(func=cmd_history)
+    l = sub.add_parser("logbook")
+    l.add_argument("--hours", type=int, default=24); l.add_argument("--entity")
+    l.set_defaults(func=cmd_logbook)
+    t = sub.add_parser("template")
+    t.add_argument("template", help="Jinja template string")
+    t.set_defaults(func=cmd_template)
+
 _REGISTRARS = []  # each later task appends a register(sub) callable
 _REGISTRARS.append(register_control)
+_REGISTRARS.append(register_query)
 
 if __name__ == "__main__":
     sys.exit(main())

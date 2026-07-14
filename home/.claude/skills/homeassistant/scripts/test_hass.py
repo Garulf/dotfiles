@@ -36,5 +36,11 @@ class TestParseValue(unittest.TestCase):
     def test_plain_string(self):
         self.assertEqual(hass.parse_value("kitchen"), "kitchen")
 
+class TestIso(unittest.TestCase):
+    def test_format_has_t_and_offset(self):
+        ts = hass._iso_hours_ago(1)
+        self.assertIn("T", ts)
+        self.assertTrue(ts.endswith("+00:00") or ts.endswith("Z"))
+
 if __name__ == "__main__":
     unittest.main()
