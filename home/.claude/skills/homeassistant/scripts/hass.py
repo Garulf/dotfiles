@@ -128,7 +128,59 @@ def main(argv=None):
     except ConnError as e:
         print(f"UNREACHABLE: {e}", file=sys.stderr); return 2
 
+def cmd_call(args):
+    base_url, token = resolve_config(args)
+    if "." not in args.service:
+        print("Service must be DOMAIN.SERVICE, e.g. light.turn_on", file=sys.stderr); return 1
+    domain, service = args.service.split(".", 1)
+    payload = {}
+    if args.entity:
+        payload["entity_id"] = [e.strip() for e in args.entity.split(",")]
+    for kv in args.data or []:
+        if "=" not in kv:
+            print(f"Bad --data (need k=v): {kv}", file=sys.stderr); return 1
+        k, v = kv.split("=", 1)
+        payload[k] = parse_value(v)
+    st, body = api("POST", base_url, token, f"/api/services/{domain}/{service}", payload)
+    if st == 400:
+        print(f"Bad service call (400): {body}", file=sys.stderr); return 1
+    if st == 401:
+        print("AUTH FAILED (401)", file=sys.stderr); return 2
+    if st >= 300:
+        print(f"Error {st}: {body}", file=sys.stderr); return 1
+    # echo resulting state of each targeted entity
+    for eid in payload.get("entity_id", []):
+        s2, b2 = api("GET", base_url, token, "/api/states/" + eid)
+        if isinstance(b2, dict):
+            print(f"{eid} -> {b2.get('state')}")
+    print(f"OK {args.service} ({len(payload.get('entity_id', []))} target(s))")
+    return 0
+
+def cmd_services(args):
+    base_url, token = resolve_config(args)
+    st, body = api("GET", base_url, token, "/api/services")
+    if not isinstance(body, list):
+        print(f"Unexpected response ({st})", file=sys.stderr); return 1
+    for dom in sorted(body, key=lambda d: d["domain"]):
+        if args.domain and dom["domain"] != args.domain:
+            continue
+        for name, meta in sorted(dom.get("services", {}).items()):
+            desc = meta.get("name") or meta.get("description", "")
+            print(f"{dom['domain']}.{name}  —  {desc}")
+    return 0
+
+def register_control(sub):
+    c = sub.add_parser("call")
+    c.add_argument("service", help="DOMAIN.SERVICE")
+    c.add_argument("--entity", help="entity_id (comma-separated for multiple)")
+    c.add_argument("--data", action="append", metavar="K=V")
+    c.set_defaults(func=cmd_call)
+    s = sub.add_parser("services")
+    s.add_argument("--domain")
+    s.set_defaults(func=cmd_services)
+
 _REGISTRARS = []  # each later task appends a register(sub) callable
+_REGISTRARS.append(register_control)
 
 if __name__ == "__main__":
     sys.exit(main())
