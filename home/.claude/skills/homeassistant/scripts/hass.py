@@ -61,3 +61,74 @@ def api(method, base_url, token, path, payload=None, timeout=10):
 def _maybe_json(text):
     try: return json.loads(text)
     except ValueError: return text
+
+def _short(base_url, token, entity):
+    st, body = api("GET", base_url, token, "/api/states/" + entity)
+    return st, body
+
+def cmd_ping(args):
+    base_url, token = resolve_config(args)
+    try:
+        st, body = api("GET", base_url, token, "/api/", timeout=5)
+    except ConnError as e:
+        print(f"UNREACHABLE: {base_url} ({e})", file=sys.stderr); return 2
+    if st == 401:
+        print("AUTH FAILED (401): token rejected", file=sys.stderr); return 2
+    msg = body.get("message") if isinstance(body, dict) else body
+    print(f"OK {base_url} — {msg}")
+    return 0
+
+def cmd_states(args):
+    base_url, token = resolve_config(args)
+    if args.entity_id:
+        st, body = api("GET", base_url, token, "/api/states/" + args.entity_id)
+        if st == 404:
+            print(f"Unknown entity: {args.entity_id}", file=sys.stderr); return 1
+        print(json.dumps(body, indent=2)); return 0
+    st, body = api("GET", base_url, token, "/api/states")
+    if not isinstance(body, list):
+        print(f"Unexpected response ({st}): {body}", file=sys.stderr); return 1
+    rows = []
+    for e in body:
+        eid = e["entity_id"]
+        fn = e.get("attributes", {}).get("friendly_name", "")
+        if args.domain and not eid.startswith(args.domain + "."):
+            continue
+        if args.filter and args.filter.lower() not in (eid + " " + fn).lower():
+            continue
+        rows.append((eid, str(e.get("state", "")), fn))
+    w = max((len(r[0]) for r in rows), default=0)
+    for eid, state, fn in sorted(rows):
+        print(f"{eid:<{w}}  {state:<12}  {fn}")
+    print(f"\n{len(rows)} ent  (of {len(body)})")
+    return 0
+
+def build_parser():
+    import argparse
+    p = argparse.ArgumentParser(prog="hass", description="Home Assistant REST CLI")
+    p.add_argument("--url"); p.add_argument("--token")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("ping").set_defaults(func=cmd_ping)
+    s = sub.add_parser("states")
+    s.add_argument("entity_id", nargs="?")
+    s.add_argument("--domain"); s.add_argument("--filter")
+    s.set_defaults(func=cmd_states)
+    return p, sub
+
+def main(argv=None):
+    p, sub = build_parser()
+    # later tasks call register_*(sub) here
+    for reg in _REGISTRARS:
+        reg(sub)
+    args = p.parse_args(argv)
+    try:
+        return args.func(args)
+    except ConfigError as e:
+        print(str(e), file=sys.stderr); return 2
+    except ConnError as e:
+        print(f"UNREACHABLE: {e}", file=sys.stderr); return 2
+
+_REGISTRARS = []  # each later task appends a register(sub) callable
+
+if __name__ == "__main__":
+    sys.exit(main())
