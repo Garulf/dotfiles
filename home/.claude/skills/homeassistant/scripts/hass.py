@@ -229,5 +229,102 @@ _REGISTRARS = []  # each later task appends a register(sub) callable
 _REGISTRARS.append(register_control)
 _REGISTRARS.append(register_query)
 
+def cmd_automation(args):
+    if args.action == "set":
+        if not args.yes:
+            print(f"REFUSED: 'automation set {args.id}' overwrites an automation. "
+                  f"Re-run with --yes to confirm.", file=sys.stderr); return 3
+    base_url, token = resolve_config(args)
+    if args.action == "list":
+        st, body = api("GET", base_url, token, "/api/states")
+        for e in body:
+            if e["entity_id"].startswith("automation."):
+                fn = e.get("attributes", {}).get("friendly_name", "")
+                print(f"{e['entity_id']:<45}  {e['state']:<4}  {fn}")
+        return 0
+    if args.action == "get":
+        st, body = api("GET", base_url, token, f"/api/config/automation/config/{args.id}")
+        print(json.dumps(body, indent=2)); return 0 if st < 300 else 1
+    if args.action == "trigger":
+        st, body = api("POST", base_url, token, "/api/services/automation/trigger",
+                       {"entity_id": args.id})
+        print(f"triggered {args.id}" if st < 300 else f"error {st}: {body}")
+        return 0 if st < 300 else 1
+    if args.action == "reload":
+        st, _ = api("POST", base_url, token, "/api/services/automation/reload", {})
+        print("reloaded" if st < 300 else f"error {st}"); return 0 if st < 300 else 1
+    if args.action == "set":
+        with open(args.file) as f:
+            cfg = json.load(f)
+        st, body = api("POST", base_url, token,
+                       f"/api/config/automation/config/{args.id}", cfg)
+        print(f"saved {args.id}" if st < 300 else f"error {st}: {body}")
+        return 0 if st < 300 else 1
+
+def cmd_scene(args):
+    base_url, token = resolve_config(args)
+    if args.action == "list":
+        st, body = api("GET", base_url, token, "/api/states")
+        for e in body:
+            if e["entity_id"].startswith("scene."):
+                print(e["entity_id"])
+        return 0
+    st, body = api("POST", base_url, token, "/api/services/scene/turn_on",
+                   {"entity_id": args.id})
+    print(f"activated {args.id}" if st < 300 else f"error {st}: {body}")
+    return 0 if st < 300 else 1
+
+def cmd_script(args):
+    base_url, token = resolve_config(args)
+    if args.action == "list":
+        st, body = api("GET", base_url, token, "/api/states")
+        for e in body:
+            if e["entity_id"].startswith("script."):
+                print(e["entity_id"])
+        return 0
+    st, body = api("POST", base_url, token, "/api/services/script/turn_on",
+                   {"entity_id": args.id})
+    print(f"ran {args.id}" if st < 300 else f"error {st}: {body}")
+    return 0 if st < 300 else 1
+
+def cmd_config(args):
+    base_url, token = resolve_config(args)
+    if args.action == "check":
+        st, body = api("POST", base_url, token, "/api/config/core/check_config", {})
+        print(json.dumps(body, indent=2)); return 0 if st < 300 else 1
+    st, body = api("POST", base_url, token,
+                   "/api/services/homeassistant/reload_core_config", {})
+    print("core config reloaded" if st < 300 else f"error {st}"); return 0 if st < 300 else 1
+
+def cmd_restart(args):
+    if not args.yes:
+        print("REFUSED: 'restart' will restart HA core. Re-run with --yes to confirm.",
+              file=sys.stderr); return 3
+    base_url, token = resolve_config(args)
+    st, body = api("POST", base_url, token, "/api/services/homeassistant/restart", {})
+    print("restart requested" if st < 300 else f"error {st}: {body}")
+    return 0 if st < 300 else 1
+
+def register_admin(sub):
+    a = sub.add_parser("automation")
+    a.add_argument("action", choices=["list", "get", "set", "trigger", "reload"])
+    a.add_argument("id", nargs="?")
+    a.add_argument("--file", help="JSON file for 'set'")
+    a.add_argument("--yes", action="store_true")
+    a.set_defaults(func=cmd_automation)
+    sc = sub.add_parser("scene")
+    sc.add_argument("action", choices=["list", "activate"]); sc.add_argument("id", nargs="?")
+    sc.set_defaults(func=cmd_scene)
+    scr = sub.add_parser("script")
+    scr.add_argument("action", choices=["list", "run"]); scr.add_argument("id", nargs="?")
+    scr.set_defaults(func=cmd_script)
+    cf = sub.add_parser("config")
+    cf.add_argument("action", choices=["check", "reload"])
+    cf.set_defaults(func=cmd_config)
+    r = sub.add_parser("restart"); r.add_argument("--yes", action="store_true")
+    r.set_defaults(func=cmd_restart)
+
+_REGISTRARS.append(register_admin)
+
 if __name__ == "__main__":
     sys.exit(main())
