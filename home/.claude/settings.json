@@ -1,9 +1,10 @@
 {
   "attribution": {
     "commit": "",
-    "pr": ""
+    "pr": "",
+    "sessionUrl": false
   },
-  "model": "claude-fable-5[1m]",
+  "model": "opus",
   "statusLine": {
     "type": "command",
     "command": "bash \"$HOME/.claude/statusline-command.sh\""

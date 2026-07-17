@@ -39,3 +39,4 @@ bindkey -e
 
 # Auto-attach tmux if appropriate
 tmux_shell
+[ -f ~/.config/claude/ha.env ] && source ~/.config/claude/ha.env
