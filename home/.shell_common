@@ -11,6 +11,9 @@ if [ -n "$_shell" ]; then
     PS1='\[\033[01;32m\]\u@\h\[\033[00m\] \[\033[01;34m\]\w\[\033[00m\] \$ '
   fi
 
+  # zoxide's init-order "doctor" false-positives with znap + starship (cd is
+  # correctly hooked and works); silence the per-command warning.
+  export _ZO_DOCTOR=0
   command -v zoxide > /dev/null && eval "$(zoxide init $_shell --cmd cd)"
 fi
 unset _shell
