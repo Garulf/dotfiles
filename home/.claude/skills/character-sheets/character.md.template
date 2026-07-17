@@ -1,0 +1,50 @@
+---
+name: <display name>
+slug: <folder-slug>
+trigger: <lora trigger word, or —>
+lora: <lora filename, or none yet>
+---
+
+# <display name>
+
+## Traits
+
+Quick-reference identity anchors (the Canonical description below is authoritative — keep
+these in sync with it):
+
+- **Hair:** <color, length/style>
+- **Eyes:** <color>
+- **Skin:** <tone + marks, e.g. freckles>
+- **Distinguishing features:** <undercut, scars, heterochromia, tattoos, etc.>
+- **Build:** <height/build — optional>
+- **Signature outfit:** <the defining pieces, short>
+- **Props:** <signature items>
+- **Companion:** <or none>
+
+## Canonical description
+
+<full prose identity block from Step 1: hair, eyes, skin, outfit piece by piece,
+asymmetric details spelled out for BOTH sides, signature props/companion. This block
+is the prose identity krea2-character-images uses for scene prompts.>
+
+## Trigger & LoRA
+
+- **Trigger word:** <trigger, or none — prose-only via turbo txt2img>
+- **LoRA:** <filename, or none yet>
+- **Strength:** <e.g. @0.7 + prose for scenes; @1.0 for isolated portraits — filled in by
+  character-lora-training's eval step>
+- **Caveats:** <defective versions not to use; style-transfer notes>
+
+## Sheets
+
+Server input folder: `<slug>/`
+
+- `<file>.png` — <what it is>
+
+## Lore / concepts
+
+<what fits this character; tone; recurring companion; what to avoid>
+
+## Verification notes
+
+- <YYYY-MM-DD>: <what was verified>

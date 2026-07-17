@@ -16,9 +16,17 @@ Never combine them into one all-in-one image: verified failure — asymmetric de
 
 Server mechanics (comfy.py, submit, upload): **REQUIRED BACKGROUND:** the `comfyui` skill. Palette and lighting adjectives for the prompts below: the `visual-craft` skill (light-and-color, anime-styles references). Use comfy.py's default server URL; the port has flipped between instances before (an old Desktop install answered on :8000), so if `stats` times out, probe the other port before concluding the machine is off.
 
+## Workspace
+
+Before generating anything, create one folder named after the character — their name, or a short kebab-case slug describing them if unnamed (`cyberpunk-merc-hacker`, `dwarf-blacksmith`) — and put EVERY file for that character in it: workflow JSONs, crops, candidate outputs, re-rolls, final sheets. Re-rolls and variants stay in the same folder with their `_v2`/`_v3` suffixes. Never scatter a character's files across ad-hoc `out_*` directories. The character's `character.md` profile (Step 1) also lives in this folder, next to the sheets — locally and on the server.
+
+The same folder name goes in every `SaveImage` node: set `filename_prefix` to `<character-folder>/<image-name>` so the SERVER's output directory is organized identically (verified: creates `output/<character-folder>/` on the server; note `comfy.py --out` flattens on download, so pass the local character folder as `--out` yourself).
+
 ## Step 1 — Canonical description
 
-Distill the character into one prose block before generating: hair, eyes, skin, outfit piece by piece, signature props/companion, and any **asymmetric detail spelled out for BOTH sides** ("her LEFT arm is a mechanical bronze prosthetic with visible joints; her right arm is a normal human arm"). From an image, describe what you see in the same format. If the user left parts unstated (usually the lower body), invent plausible items, add them to the block, and tell the user — the sheet becomes canon, so the invention must be recorded, not silent. Save this block — it is also exactly what `krea2-character-images` needs for downstream scene prompts.
+Distill the character into one prose block before generating: hair, eyes, skin, outfit piece by piece, signature props/companion, and any **asymmetric detail spelled out for BOTH sides** ("her LEFT arm is a mechanical bronze prosthetic with visible joints; her right arm is a normal human arm"). From an image, describe what you see in the same format. If the user left parts unstated (usually the lower body), invent plausible items, add them to the block, and tell the user — the sheet becomes canon, so the invention must be recorded, not silent.
+
+**Write the profile.** Create `character.md` in the character's folder (see Workspace) and save this block into it as the canonical description — this file is the character's durable home: `krea2-character-images` reads it for scene prompts and `character-lora-training` writes the trigger/LoRA back into it. Record the character name/slug, the structured traits (hair, eyes, skin, signature outfit, props, companion), the canonical description, the lore/concepts that fit them, and (once sheets exist) the sheet file list. A template lives in `character.md.template` beside this skill. After uploading, add the character to the roster table in the `krea2-character-images` skill.
 
 ## Step 2 — Pick the path
 
@@ -79,7 +87,9 @@ View every candidate at full size and check against the canonical description (o
 ## Step 3 — Deliver
 
 1. Show the user both sheets and get approval (offer re-rolls of anything they dislike).
-2. On approval: `comfy.py upload <sheet>.png` to the server inputs folder (this is where `krea2-character-images` expects sheets) and keep local copies; tell the user both locations.
+2. On approval: upload each sheet into a character-named SUBFOLDER of the server inputs (this is where `krea2-character-images` expects sheets) and keep local copies; tell the user both locations. Place the character's `character.md` in the same subfolder so the profile travels with the sheets — `curl`'s image endpoint won't take a `.md`, so `scp` it into the input subfolder (find the live base dir per the comfyui skill). `comfy.py upload` cannot target subfolders for the sheets — use curl instead (verified):
+   `curl -F "image=@<sheet>.png" -F "subfolder=<character-folder>" -F "type=input" $SERVER/upload/image`
+   Downstream `LoadImage` nodes then take `<character-folder>/<file>.png` — this works in submitted workflows even though the LoadImage combo listing may not show subfolder entries.
 3. Optional phone delivery: scp into the **live instance's** `output\` directory on albedo and share `<server>/view?filename=<name>&type=output`. albedo has multiple ComfyUI installs and the old Desktop path (`Documents\ComfyUI`) is stale — find the running instance's base directory first (procedure in the comfyui skill's api.md, "Find the live base directory").
 
 ## Common mistakes

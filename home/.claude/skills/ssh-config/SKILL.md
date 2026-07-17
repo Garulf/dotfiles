@@ -9,7 +9,9 @@ Rules and workflows for operating over SSH from an agent context: discover what 
 
 ## 1. Discover before you connect
 
-Before running any `ssh`/`scp`/`rsync` command against a remote host, learn what's already configured:
+**Check `hosts.md` (in this skill's directory) first.** It's a curated index of the user's host aliases — which alias means which machine, users, jump chains, and notes. If the host you need is listed there, use that alias and skip straight to `ssh -G <alias>` for the connection details it deliberately omits (hostnames, IPs, ports).
+
+Only if the host isn't in `hosts.md` (or its details appear stale), fall back to the config itself:
 
 ```bash
 # List defined host aliases (skip wildcards)
@@ -29,6 +31,8 @@ ssh -G <host> | grep -Ei "^(hostname|user|port|identityfile|proxyjump|proxycomma
 `ssh -G` is the source of truth. Never guess what a host resolves to by eyeballing the config file — first-match-wins semantics and wildcard blocks make manual reading error-prone.
 
 **Prefer aliases over raw IPs.** If the user says "the NAS" or "my dev box" and an alias plausibly matches, use the alias — it carries the right user, port, key, and jump chain. If multiple aliases could match, ask rather than guess.
+
+If the fallback turns up a host missing from `hosts.md`, add a row for it (alias, user, proxyjump, note — never hostnames, IPs, or ports; the file may be publicly viewable).
 
 ### When the host isn't in the config
 
@@ -103,6 +107,7 @@ Host devbox
 
 5. Validate after editing: `ssh -G <new-host>` must succeed and show the intended values. Also re-check one *pre-existing* alias to confirm nothing upstream broke.
 6. Never reorder, reformat, or "clean up" existing blocks unless asked — comments and ordering are load-bearing.
+7. Mirror the change in this skill's `hosts.md` (add/update/remove the row — alias, user, proxyjump, note only; no hostnames, IPs, or ports).
 
 **Permissions matter:** if you create files, set `chmod 600 ~/.ssh/config` and key files, `chmod 700 ~/.ssh`. Wrong permissions cause ssh to silently ignore keys or refuse to run.
 
