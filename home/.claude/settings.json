@@ -4,7 +4,7 @@
     "pr": "",
     "sessionUrl": false
   },
-  "model": "opus",
+  "model": "claude-fable-5[1m]",
   "statusLine": {
     "type": "command",
     "command": "bash \"$HOME/.claude/statusline-command.sh\""
@@ -25,7 +25,7 @@
       }
     }
   },
-  "effortLevel": "medium",
+  "effortLevel": "high",
   "theme": "dark",
   "preferredNotifChannel": "terminal_bell",
   "inputNeededNotifEnabled": true,
