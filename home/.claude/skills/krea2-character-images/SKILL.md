@@ -67,7 +67,9 @@ FaceDetailer and the USDU tile pass are **not part of the default pipeline**. Ad
 - **Neutral, character-FREE positive prompt** (e.g. `highly detailed anime illustration, crisp line art, intricate textures, rich color, masterpiece quality`) via its own `CLIPTextEncode` — feeding the character/scene prompt grows mini-copies of the character in background tiles (verified A/B, nvcyra seed 663201: character prompt = 3 clones, neutral prompt = clean).
 - **Base model WITHOUT the character LoRA** feeds USDU (`["1",0]`, not the LoRA node) — the LoRA model still drives base gen and FaceDetailer.
 
-When both passes are requested, order is **USDU → FaceDetailer** (face pass runs on USDU's output).
+**Hero-only detailer** (`hero_detail=True`) — re-diffuses just the **hero figure** (body, outfit, props, hands) to restore crispness the character-FREE tile pass leaves neutral. Pipeline: `UltralyticsDetectorProvider(segm/person_yolov8m-seg.pt)` → `SegmDetectorSEGS` → `ImpactSEGSOrderedFilter` (`target area(=w*h)`, keep the **largest 1**) → `DetailerForEach`. Keeping only the largest person is what makes it "hero *only*" — crowd/background figures in busy scenes are untouched. Runs on the **base model WITHOUT the LoRA** (`["1",0]`) with a **neutral character-FREE prompt** and low **denoise 0.22** — a pure sharpen, no identity re-assert, so it can't grow a second hero. The person `.pt` install requirement is identical to the face detector: download from Bingsu/adetailer, **verify SHA-256** (`person_yolov8m-seg.pt` = `c8ab26f5…`), physically place at `<install>\models\ultralytics\segm\`, and add `person_yolov8m-seg.pt` to the Impact Subpack `model-whitelist.txt` (installed + whitelisted 2026-07-17).
+
+When all passes are requested, order is **USDU → hero DetailerForEach → FaceDetailer** (face runs last so it's the final word on the face; each pass runs on the previous one's output).
 
 Three ways the detailer silently no-ops (all verified 2026-07-14 — a no-op = output pixel-identical to input; confirm by diffing, or by saving FaceDetailer output slot 1 `cropped_refined` which is black when nothing was detected):
 
@@ -123,6 +125,7 @@ Generation is not done when the queue drains; it is done when every image has pa
 | 4K tail | VAEDecode → `4x-UltraSharp.safetensors` → `ImageScale` lanczos 3840×2160 |
 | Face detail (opt-in) | AFTER the 4K tail: `FaceDetailer` (detector `bbox/face_yolov8m.pt`, denoise 0.4, guide 1024/max 2048) → save. Detector must be whitelisted in the subpack. Builder: `scripts/wallpaper_pipeline.py` `face_detail=True` |
 | Tile detail (opt-in) | `UltimateSDUpscale` replaces the 4K tail: upscale_by 2.5 + 4x-UltraSharp, denoise 0.25, tile 1024², neutral character-free prompt, LoRA-free model. Builder `tile_detail=True` |
+| Hero-only detail (opt-in) | Person segm detector (`segm/person_yolov8m-seg.pt`) → `SegmDetectorSEGS` → `ImpactSEGSOrderedFilter` keep-largest-1 → `DetailerForEach`, base model (NO LoRA), neutral prompt, denoise 0.22. Detector must be whitelisted. Builder `hero_detail=True`. Order with others: USDU → hero → face |
 | Composition | "on the RIGHT/LEFT side/third of the frame" in plain language — qwen3vl follows it reliably |
 | Timing (RTX 5080) | txt2img+4K ≈ 45 s; + face detail ≈ 70 s; + tile detail ≈ 2.5 min; identity edit ≈ 2.5 min |
 

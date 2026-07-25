@@ -17,7 +17,16 @@ Detail passes are OPT-IN (only when the user asks for them):
                            of the character in background tiles -- verified A/B, nvcyra 663201)
                          - base model WITHOUT the character LoRA feeds USDU; the LoRA model
                            still drives base gen and FaceDetailer.
-  Both on -> order is USDU -> FaceDetailer.
+  hero_detail=True  -> re-diffuses ONLY the hero figure to sharpen body/outfit/props that the
+                       character-FREE tile pass leaves neutral. Person segm detector
+                       (segm/person_yolov8m-seg.pt) -> SEGS -> ImpactSEGSOrderedFilter keeps the
+                       LARGEST person only (so crowd/background figures in busy scenes are NOT
+                       touched -- this is what makes it "hero ONLY") -> DetailerForEach at low
+                       denoise 0.22. Runs on the BASE model WITHOUT the LoRA and a neutral
+                       character-FREE prompt: a pure sharpen, no identity re-assert -- which also
+                       means it can't grow a second hero. The person .pt must be installed +
+                       whitelisted exactly like the face detector (see below).
+  All on -> order is USDU -> hero DetailerForEach -> FaceDetailer (face is the final word).
 
 FaceDetailer detector: UltralyticsDetectorProvider with **bbox/face_yolov8m.pt**. Gotchas:
   1. face_yolov8s does NOT detect this Krea2 anime style at all ("no detections" in the log) --
@@ -38,8 +47,8 @@ Usage:
   # ... json.dump(wf) then submit with comfy.py
 For a LoRA-less character (prose-only), pass lora=None to drop the LoRA node.
 
-CLI: build.py "<prompt>" <seed> <prefix> [lora] [strength] [trigger] [face] [tile]
-     (trailing "face" / "tile" tokens enable the corresponding pass)
+CLI: build.py "<prompt>" <seed> <prefix> [lora] [strength] [trigger] [face] [tile] [hero]
+     (trailing "face" / "tile" / "hero" tokens enable the corresponding pass)
 """
 import json, sys
 
@@ -58,11 +67,16 @@ TILE_PROMPT = ("highly detailed anime illustration, crisp line art, intricate te
                "rich color, masterpiece quality")  # character-FREE on purpose (see docstring)
 
 
+HERO_PROMPT = ("highly detailed anime character, crisp clean line art, sharp detailed fabric "
+               "and armor textures, detailed hands, masterpiece quality")  # character-FREE, no LoRA
+
+
 def build(prompt, seed, prefix,
           lora="whitemage_rank32.safetensors", strength=1.0,
           face_prompt="detailed face, clean smooth skin, sharp crisp features, detailed eyes",
           trigger="qildra", w=1536, h=864, face_denoise=0.4,
-          face_detail=False, tile_detail=False, tile_denoise=0.25):
+          face_detail=False, tile_detail=False, tile_denoise=0.25,
+          hero_detail=False, hero_denoise=0.22):
     model_ref = ["1b", 0] if lora else ["1", 0]
     wf = {
       # --- base generation ---
@@ -99,7 +113,25 @@ def build(prompt, seed, prefix,
         wf["15"] = {"class_type": "ImageScale", "inputs": {"upscale_method": "lanczos", "width": 3840, "height": 2160, "crop": "disabled", "image": ["14", 0]}}
         image_out = ["15", 0]
 
-    # --- face detail (opt-in; on the full-res image, after the tile pass if both) ---
+    # --- hero-only detail (opt-in; whole figure, NO LoRA, LARGEST person only, after USDU) ---
+    if hero_detail:
+        wf["20"] = {"class_type": "UltralyticsDetectorProvider", "inputs": {"model_name": "segm/person_yolov8m-seg.pt"}}
+        wf["21"] = {"class_type": "SegmDetectorSEGS", "inputs": {
+            "segm_detector": ["20", 1], "image": image_out,   # slot 1 = SEGM_DETECTOR
+            "threshold": 0.5, "dilation": 10, "crop_factor": 3.0, "drop_size": 10, "labels": "all"}}
+        wf["22"] = {"class_type": "ImpactSEGSOrderedFilter", "inputs": {  # keep only the biggest figure
+            "segs": ["21", 0], "target": "area(=w*h)", "order": True, "take_start": 0, "take_count": 1}}
+        wf["23"] = {"class_type": "CLIPTextEncode", "inputs": {"text": HERO_PROMPT, "clip": ["2", 0]}}
+        wf["24"] = {"class_type": "ConditioningZeroOut", "inputs": {"conditioning": ["23", 0]}}
+        wf["25"] = {"class_type": "DetailerForEach", "inputs": {
+                "image": image_out, "segs": ["22", 0], "model": ["1", 0], "clip": ["2", 0], "vae": ["3", 0],
+                "guide_size": 1024, "guide_size_for": True, "max_size": 2048,
+                "seed": seed + 5, "steps": 8, "cfg": 1.0, "sampler_name": "euler", "scheduler": "simple",
+                "positive": ["23", 0], "negative": ["24", 0], "denoise": hero_denoise,
+                "feather": 5, "noise_mask": True, "force_inpaint": True, "wildcard": "", "cycle": 1}}
+        image_out = ["25", 0]
+
+    # --- face detail (opt-in; on the full-res image, after the hero/tile passes if both) ---
     if face_detail:
         face_text = f"{trigger}, {face_prompt}" if trigger else face_prompt
         wf["9"]  = {"class_type": "CLIPTextEncode", "inputs": {"text": face_text, "clip": ["2", 0]}}
@@ -131,4 +163,5 @@ if __name__ == "__main__":
     lora = None if lora in ("", "none", "None") else lora
     flags = set(a[7:])
     json.dump(build(prompt, seed, prefix, lora=lora, strength=strength, trigger=trigger,
-                    face_detail="face" in flags, tile_detail="tile" in flags), sys.stdout)
+                    face_detail="face" in flags, tile_detail="tile" in flags,
+                    hero_detail="hero" in flags), sys.stdout)
