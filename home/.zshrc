@@ -23,11 +23,16 @@ autoload -Uz compinit && compinit
 # `delta` is hijacked by system _sccs). So do both explicitly: autoload the
 # function from fpath, and set _comps directly — the latter also bypasses znap's
 # compdef stub, which drops calls after compinit (same reason _proj does this).
-for _c in $ZSH_COMPDEF_TOOLS; do
-  autoload -Uz _$_c
-  _comps[$_c]=_$_c
-done
-unset _c
+# Guard on _comps being an association: if compsys didn't initialize (e.g. znap
+# not bootstrapped on a fresh/minimal host like Termux), assigning _comps[key]
+# would hit a plain-array subscript and error.
+if [[ ${(t)_comps} == association* ]]; then
+  for _c in $ZSH_COMPDEF_TOOLS; do
+    autoload -Uz _$_c
+    _comps[$_c]=_$_c
+  done
+  unset _c
+fi
 
 # Eval-style completions/integrations cached by completions.zsh (need compinit
 # first: pip/npm self-register via compctl/compdef, fzf adds keybindings).
