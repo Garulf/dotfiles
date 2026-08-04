@@ -5,115 +5,101 @@ description: How to read, use, and safely edit the user's SSH client config (~/.
 
 # SSH Config
 
-Rules and workflows for operating over SSH from an agent context: discover what the user already has configured, prefer their aliases, never hang on interactive prompts, and edit `~/.ssh/config` without breaking it.
+Operating over SSH from an agent context: discover what the user already has configured, prefer their aliases, never hang on interactive prompts, and edit `~/.ssh/config` without breaking it.
+
+Four scripts own the mechanics. Use them instead of hand-rolling flags — they encode the rules below as behavior and exit codes.
+
+| Script | Use it for |
+|---|---|
+| `ssh-info.sh [alias]` | List aliases, or resolve one alias's effective config |
+| `ssh-run.sh <host> <cmd>` | Run a remote command without hanging; classify failures |
+| `ssh-add-host.sh --alias A --hostname H` | Add a Host block with backup, validation, and rollback |
+| `ssh-doctor.sh <host>` | Diagnose a connection that isn't working |
+
+Invoke by absolute path — the working directory is not the skill directory. `scripts/` below is shorthand for:
+
+```bash
+~/.claude/skills/ssh-config/scripts/
+```
+
+Shared exit codes: **3** refused (would need a manual edit), **4** host isn't a defined alias, **5** validation failed and the config was rolled back, **255** could not connect.
 
 ## 1. Discover before you connect
 
-**Check `hosts.md` (in this skill's directory) first.** It's a curated index of the user's host aliases — which alias means which machine, users, jump chains, and notes. If the host you need is listed there, use that alias and skip straight to `ssh -G <alias>` for the connection details it deliberately omits (hostnames, IPs, ports).
+**Check `hosts.md` (in this skill's directory) first.** It's a curated index of the user's host aliases — which alias means which machine, users, jump chains, and notes. If the host is listed there, use that alias.
 
-Only if the host isn't in `hosts.md` (or its details appear stale), fall back to the config itself:
-
-```bash
-# List defined host aliases (skip wildcards)
-grep -E "^Host " ~/.ssh/config | grep -v "[*?]"
-
-# Check for included config fragments
-grep -iE "^Include" ~/.ssh/config
-# If present, read those files too (paths are relative to ~/.ssh/)
-```
-
-Resolve the *effective* config for a host — this expands Match blocks, Includes, wildcards, and defaults exactly as ssh will apply them:
+For anything the index deliberately omits (hostnames, IPs, ports) or if it looks stale:
 
 ```bash
-ssh -G <host> | grep -Ei "^(hostname|user|port|identityfile|proxyjump|proxycommand|controlpath|forwardagent)"
+scripts/ssh-info.sh              # every defined alias, plus any Include files
+scripts/ssh-info.sh homenas      # hosts.md row + effective config via ssh -G
 ```
 
-`ssh -G` is the source of truth. Never guess what a host resolves to by eyeballing the config file — first-match-wins semantics and wildcard blocks make manual reading error-prone.
+`ssh -G` is the source of truth — it expands Match blocks, Includes, wildcards, and defaults exactly as ssh will apply them. Never guess what a host resolves to by eyeballing the config file; first-match-wins semantics and wildcard blocks make manual reading error-prone.
 
 **Prefer aliases over raw IPs.** If the user says "the NAS" or "my dev box" and an alias plausibly matches, use the alias — it carries the right user, port, key, and jump chain. If multiple aliases could match, ask rather than guess.
 
-If the fallback turns up a host missing from `hosts.md`, add a row for it (alias, user, proxyjump, note — never hostnames, IPs, or ports; the file may be publicly viewable).
+If you turn up a host that's missing from `hosts.md`, add a row for it (alias, user, proxyjump, OS, note — never hostnames, IPs, or ports; the file may be publicly viewable).
 
-### When the host isn't in the config
+**If the host isn't in the config**, `ssh-info.sh` exits 4 and tells you what to ask for. Do not guess connection parameters or try them by trial and error. Get the details from the user, then ask: *"Want me to add this as a Host entry in your ssh config so it's a one-word connect next time?"* If yes, section 3. If no, use `ssh-run.sh --adhoc` for the one-off and don't write to the config.
 
-If the host the user mentioned doesn't match any alias (and `ssh -G` just echoes it back with defaults), **do not guess or try connection parameters by trial and error**. Instead, ask the user for the missing pieces:
-
-- Hostname or IP
-- Username (don't assume the local username)
-- Port, if non-standard
-- Whether it's reached directly or through a jump host they already have configured
-- Which key to use, if they have several
-
-Then ask: **"Want me to add this as a Host entry in your ssh config so it's a one-word connect next time?"** If yes, follow section 5 (Editing safely). If no, use the details for a one-off command and move on — don't write to the config without an explicit yes.
-
-## 2. Running remote commands non-interactively
-
-An agent cannot answer password prompts or host-key confirmations. Every scripted SSH invocation should be prompt-proof:
+## 2. Running remote commands
 
 ```bash
-ssh -o BatchMode=yes -o ConnectTimeout=10 <host> '<command>'
-```
+scripts/ssh-run.sh homenas 'uname -a'
 
-- `BatchMode=yes` makes ssh fail fast instead of hanging on a password prompt. If it fails with "Permission denied", key auth isn't set up — report that to the user; do not retry in a loop or attempt password auth.
-- For a brand-new host, the host-key prompt will block. Either tell the user to connect once manually, or (only with their OK) use `-o StrictHostKeyChecking=accept-new`. Never use `StrictHostKeyChecking=no` — it also silences key *changes*, which defeats MITM protection.
-- Quote carefully: single-quote the remote command so local shell expansion doesn't mangle it. For multi-line remote scripts, use a quoted heredoc:
-
-```bash
-ssh <host> 'bash -s' <<'EOF'
+scripts/ssh-run.sh devbox <<'EOF'          # no command arg = script on stdin
 set -euo pipefail
 echo "runs remotely, $HOME is remote"
 EOF
 ```
 
-- Check exit codes: `ssh host 'cmd'` propagates the remote exit code. A timeout/connection failure returns 255 — distinguish "command failed" from "couldn't connect".
-- Allocate a TTY (`-t`) only when the remote command genuinely needs one (e.g. `sudo` with password, interactive tools). Never combine `-t` with BatchMode expectations.
+It applies `BatchMode=yes` and a connect timeout, reuses a multiplexed connection (unless the user's own config already sets `ControlPath`), and passes the remote command's real exit code straight through.
 
-## 3. Multiplexing for repeated commands
+Options: `--timeout N`, `--accept-new` (accept an unknown host key this once), `--tty` (disables BatchMode, so it can block), `--no-mux`, `--adhoc` (destination that isn't a config alias — only after the user supplied the details).
 
-If a task requires several commands against the same host, don't pay the handshake (and jump-chain) cost every time. Open a control master once:
+**Exit 255 means the connection failed, not the command.** The script prints which kind — publickey denied, host key changed, unknown host key, DNS, timeout, refused — with the right next move. On `Permission denied (publickey)`, report it to the user; do not retry in a loop and do not attempt password auth.
+
+`StrictHostKeyChecking=no` is deliberately unreachable from the script: it silences key *changes* too, which defeats MITM protection. `--accept-new` is the scoped opt-in, and only with the user's OK.
+
+For repeated `scp`/`rsync` to the same host, prime the multiplexed connection first with `ssh-run.sh <host> true`; subsequent transfers reuse it. `scp`/`sftp`/`rsync -e ssh` all honor `ProxyJump` from the config — never manually pipe through a bastion the config already chains.
+
+## 3. Adding a host to the config
+
+Treat the config as production infrastructure — a syntax error can lock the user out of everything. Never hand-edit it when this script applies:
 
 ```bash
-ssh -o ControlMaster=auto -o ControlPath=~/.ssh/cm-%r@%h:%p -o ControlPersist=5m <host> true
-# Subsequent ssh/scp/rsync to <host> with the same ControlPath reuse the connection
+scripts/ssh-add-host.sh --dry-run --alias devbox --hostname 10.0.0.2 --user garulf --port 2222 --jump bastion
+scripts/ssh-add-host.sh --alias devbox --hostname 10.0.0.2 --user garulf --port 2222 --jump bastion \
+    --os "Debian 12" --note "build box"
 ```
 
-Check whether the user's config already sets `ControlMaster`/`ControlPath` (via `ssh -G`) — if so, just use plain `ssh` and it multiplexes automatically. Clean up with `ssh -O exit -o ControlPath=... <host>` if you started a persistent master the config didn't define.
+It backs up to `~/.ssh/config.bak.<epoch>`, writes into the `Include` directory if the config uses one, otherwise inserts **above the first wildcard `Host` block** (ssh uses the first matching value for each option), sets `600`/`700` permissions, then validates: the new alias must resolve to the intended hostname *and* a pre-existing alias must still resolve identically. Any mismatch restores the backup and exits 5. It then mirrors the change into `hosts.md`, with hostname/IP/port structurally excluded from the row.
 
-## 4. Jump hosts and multi-hop
+Always `--dry-run` first and show the user the block and placement.
 
-- One-off: `ssh -J bastion target` (chains allowed: `-J hop1,hop2`).
-- Persistent: `ProxyJump bastion` inside the target's Host block.
-- `scp`/`sftp`/`rsync -e ssh` all honor ProxyJump from the config — never manually pipe through the bastion when the config already defines the chain.
-- To debug a multi-hop failure, test each hop independently: `ssh bastion true`, then `ssh -J bastion target true`.
+It refuses (exit 3) if the alias already exists. **Changing or removing an existing block is a manual edit** — back up first, change only what was asked, and never reorder or reformat other blocks: comments and ordering are load-bearing. Re-validate afterwards with `ssh-info.sh` on both the edited alias and one untouched one, and update `hosts.md` by hand.
 
-## 5. Editing ~/.ssh/config safely
+## 4. Debugging a connection
 
-Treat the config as production infrastructure — a syntax error can lock the user out of everything.
-
-**Procedure:**
-1. Back up first: `cp ~/.ssh/config ~/.ssh/config.bak.$(date +%s)`
-2. Understand ordering: **ssh uses the first matching value for each option**. Specific `Host` blocks must appear *before* wildcard blocks like `Host *`. Never append a specific host after a `Host *` block that overrides the options you're setting — insert it above instead.
-3. If the config uses `Include ~/.ssh/config.d/*` (or similar), prefer adding a new file in that directory over editing the main file.
-4. Add complete, minimal blocks:
-
-```
-Host devbox
-    HostName 10.0.0.2
-    Port 2222
-    User garulf
-    IdentityFile ~/.ssh/id_ed25519
-    ProxyJump bastion
+```bash
+scripts/ssh-doctor.sh homenas
 ```
 
-5. Validate after editing: `ssh -G <new-host>` must succeed and show the intended values. Also re-check one *pre-existing* alias to confirm nothing upstream broke.
-6. Never reorder, reformat, or "clean up" existing blocks unless asked — comments and ordering are load-bearing.
-7. Mirror the change in this skill's `hosts.md` (add/update/remove the row — alias, user, proxyjump, note only; no hostnames, IPs, or ports).
+Read-only — it recommends fixes and never applies them. It checks the alias exists, dumps the effective config, tests each jump hop independently (so a bastion failure isn't misread as the target being down), then classifies `ssh -v` output into one verdict:
 
-**Permissions matter:** if you create files, set `chmod 600 ~/.ssh/config` and key files, `chmod 700 ~/.ssh`. Wrong permissions cause ssh to silently ignore keys or refuse to run.
+| Verdict | Your next move |
+|---|---|
+| publickey denied | Key auth isn't set up — section 5. Don't retry, don't try passwords. |
+| host key mismatch | Confirm with the user it's expected, then `ssh-keygen -R <hostname>` (that one entry only). |
+| unknown host key | User connects once manually, or with their OK `ssh-run.sh --accept-new`. |
+| DNS failure / timeout / refused / unreachable | Network-level: check HostName, Port, VPN, whether sshd is running. |
+| jump host refused to forward | Check `AllowTcpForwarding` on the bastion. |
+| unrecognised | Escalate by hand: `ssh -vv` then `-vvv`. |
 
-## 6. Key generation and distribution
+## 5. Key generation and distribution
 
-When the user needs key auth set up (or `Permission denied (publickey)` reveals it's missing), assist — but every step that touches key material or a remote machine is opt-in.
+When the user needs key auth set up (or `Permission denied (publickey)` reveals it's missing), assist — but every step that touches key material or a remote machine is opt-in. **This section is deliberately not scripted: the confirmations are the point.**
 
 **Generating a key:**
 
@@ -122,7 +108,7 @@ ssh-keygen -t ed25519 -a 100 -f ~/.ssh/id_ed25519 -C "user@machine"
 ```
 
 - Default to ed25519; use `-t rsa -b 4096` only if a legacy device (old NAS firmware, network gear) can't do ed25519.
-- **Never overwrite an existing key.** If the default path exists, either reuse it or generate under a new name (e.g. `~/.ssh/id_ed25519_<host>`) and pin it with `IdentityFile` in that host's config block.
+- **Never overwrite an existing key.** If the default path exists, either reuse it or generate under a new name (e.g. `~/.ssh/id_ed25519_<host>`) and pin it with `--identity` when adding the host block.
 - Ask whether they want a passphrase (recommended; mention ssh-agent makes it painless). Don't set an empty passphrase silently.
 - `chmod 600` the private key, `chmod 644` the `.pub`.
 
@@ -137,29 +123,16 @@ ssh-copy-id -i ~/.ssh/id_ed25519.pub <host>
 If `ssh-copy-id` isn't available or the first connection needs password auth interactively, give the user the command to run themselves rather than trying to script a password prompt. Manual fallback for hosts where you already have some access:
 
 ```bash
-cat ~/.ssh/id_ed25519.pub | ssh <host> 'mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys'
+scripts/ssh-run.sh <host> 'mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys' < ~/.ssh/id_ed25519.pub
 ```
 
-Afterwards, verify non-interactively: `ssh -o BatchMode=yes <host> true` — and offer to add/update the host's config block if it isn't there yet.
+Afterwards verify with `scripts/ssh-run.sh <host> true`, and offer to add the host's config block if it isn't there yet.
 
 Only the `.pub` file ever leaves the machine. If anything would transmit or display the private key, stop.
 
-## 7. Security rules
+## 6. Security rules
 
 - Never print, cat, or copy private key contents. Referencing paths (`IdentityFile ...`) is fine; displaying key material is not.
 - Don't add `ForwardAgent yes` or `PermitLocalCommand` for the user unprompted; explain the risk if they ask for it (agent forwarding lets a compromised remote host use their keys).
-- Don't weaken host-key checking globally. Scope any relaxation (`accept-new`, known_hosts edits) to the single host in question, e.g. `ssh-keygen -R <host>` to clear one stale key rather than deleting known_hosts.
-
-## 8. Troubleshooting quick reference
-
-| Symptom | First move |
-|---|---|
-| Hangs silently | `ssh -o ConnectTimeout=5 -v <host> true` — network/port vs auth |
-| `Permission denied (publickey)` | `ssh -G <host> \| grep identityfile`; check the key exists and is offered (`ssh -v`), check remote `authorized_keys` |
-| `Host key verification failed` | Key changed — confirm with user it's expected, then `ssh-keygen -R <hostname>` |
-| Alias resolves wrong host/user | `ssh -G <alias>` and look for an earlier wildcard block winning |
-| Works interactively, fails in script | Interactive prompt being suppressed — rerun with `BatchMode=yes -v` to see what's asked |
-| Slow connect on every command | Set up multiplexing (section 3) or check for DNS timeout (`UseDNS`, broken reverse lookup) |
-| ProxyJump chain fails | Test each hop separately; check the bastion allows TCP forwarding (`AllowTcpForwarding`) |
-
-Escalate verbosity gradually: `-v` → `-vv` → `-vvv`. The relevant line is usually near the last "Authentications that can continue" or the first "debug1: connect" failure.
+- Don't weaken host-key checking globally. Scope any relaxation to the single host in question — `ssh-keygen -R <host>` clears one stale key rather than deleting known_hosts.
+- Wrong permissions cause ssh to silently ignore keys or refuse to run: `~/.ssh` is `700`, config and private keys `600`.
