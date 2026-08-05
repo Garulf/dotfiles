@@ -43,8 +43,8 @@ function ga() {
   fi
 }
 
-function gac() { git add -v . && git commit -m "$1" }
-function gacp() { gac "$1" && git push }
+function gac() { git add -v . && git commit -m "$1"; }
+function gacp() { gac "$1" && git push; }
 
 # Bitwarden wrapper — auto-unlocks only when command fails due to auth
 function bw() {
@@ -122,7 +122,7 @@ function proj() {
 }
 
 if [[ -n "$ZSH_VERSION" && -o interactive ]] && (( ${+_comps} )); then
-  _proj() { _path_files -W "$HOME/projects" -/ }
+  _proj() { _path_files -W "$HOME/projects" -/; }
   # znap shadows compdef with a stub that silently drops calls made after
   # compinit, so register directly in the completion registry instead
   _comps[proj]=_proj
