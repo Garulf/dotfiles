@@ -10,4 +10,3 @@ shopt -s histappend
 
 # Auto-attach tmux if appropriate
 tmux_shell
-. "$HOME/.cargo/env"

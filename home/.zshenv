@@ -8,4 +8,3 @@
 # first `cd`. Silencing it here guarantees the flag is set before any snapshot
 # runs, in every shell regardless of how it was launched (e.g. `claude rc`).
 export _ZO_DOCTOR=0
-. "$HOME/.cargo/env"
