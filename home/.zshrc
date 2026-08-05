@@ -7,9 +7,18 @@ source "$HOME/.znap/znap.zsh"
 
 # Plugins
 znap source zsh-users/zsh-completions
-znap source zsh-users/zsh-autosuggestions
 znap source MichaelAquilina/zsh-auto-notify
 znap source Game4Move78/zsh-bitwarden
+
+# Ghost-text autosuggestions: deja (predictive, needs a per-machine binary at
+# ~/.local/bin/deja) when present, else fall back to history-based
+# zsh-autosuggestions. Only ever one of the two — deja stands down if it
+# detects zsh-autosuggestions loaded.
+if (( ${+commands[deja]} )); then
+  eval "$(deja init zsh)"
+else
+  znap source zsh-users/zsh-autosuggestions
+fi
 
 # Native CLI completions (docker, gh, uv, ...) — must load before compinit
 [[ -f "$HOME/.config/zsh/completions.zsh" ]] && source "$HOME/.config/zsh/completions.zsh"
