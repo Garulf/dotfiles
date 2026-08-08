@@ -3,10 +3,10 @@
 	name = Garulf
 # Note: NixOS-specific gh credential path
 [credential "https://github.com"]
-	helper = 
+	helper =
 	helper = !/usr/bin/gh auth git-credential
 [credential "https://gist.github.com"]
-	helper = 
+	helper =
 	helper = !/usr/bin/gh auth git-credential
 [alias]
 	ac = !git add -A && git commit -m
