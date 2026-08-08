@@ -22,5 +22,6 @@ __pycache__/
 
 # Secrets / machine-local state
 home/.config/claude/ha.env
+home/.config/go/
 home/.config/google-chrome-for-testing/
 home/.config/pulse/
