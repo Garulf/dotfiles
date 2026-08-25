@@ -1,2 +1,8 @@
 #!/usr/bin/env bash
-claude
+LOG="$HOME/.cache/tmux-claude-popup.log"
+{
+  echo "=== $(date) pid=$$ TERM=$TERM COLUMNS=${COLUMNS:-unset} LINES=${LINES:-unset} ==="
+  claude
+  status=$?
+  echo "claude exited $status at $(date)"
+} 2>>"$LOG"
