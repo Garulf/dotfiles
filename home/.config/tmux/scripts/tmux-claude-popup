@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+trap 'tmux set -g @claude_popup_open 0' EXIT
+tmux set -g @claude_popup_open 1
+exec claude
