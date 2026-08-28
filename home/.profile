@@ -3,8 +3,9 @@ export PATH="$HOME/.local/bin:$PATH"
 # copy here, where the rest of PATH is set, and guard it for machines without
 # a rust toolchain
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
-export TMOUT=900
-export EDITOR="NVIM_APPNAME=nvim-lazyvim nvim"
+# export TMOUT=900
+export NVIM_APPNAME=nvim-lazyvim
+export EDITOR="nvim"
 
 # Shared History Capacity
 export HISTSIZE=5000
