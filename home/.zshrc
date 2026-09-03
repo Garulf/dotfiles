@@ -10,18 +10,13 @@ znap source zsh-users/zsh-completions
 znap source MichaelAquilina/zsh-auto-notify
 znap source Game4Move78/zsh-bitwarden
 
-# Ghost-text autosuggestions: deja (predictive, needs a per-machine binary at
-# ~/.local/bin/deja) when present, else fall back to history-based
-# zsh-autosuggestions. Only ever one of the two — deja stands down if it
-# detects zsh-autosuggestions loaded.
-if (( ${+commands[deja]} )); then
-  eval "$(deja init zsh)"
-else
-  znap source zsh-users/zsh-autosuggestions
-fi
+znap source zsh-users/zsh-autosuggestions
 
 # Completion initialization
-autoload -Uz compinit && compinit
+# -u: skip the insecure-directory prompt. This container's $HOME is
+# world-writable by default, so compinit always finds "insecure" dirs in
+# fpath and otherwise silently aborts without asking (no interactive tty).
+autoload -Uz compinit && compinit -u
 
 # History options
 # HISTSIZE and SAVEHIST are inherited from .profile
